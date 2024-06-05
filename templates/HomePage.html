@@ -3,5 +3,30 @@
 {% load static %}
 
 {% block content %}
+	<div class="row my-3" >
+		<div class="col-8 px-5">
+			<div class="content" style="border: 2px solid lightgrey; border-radius: 5px">
+				{{ map|safe }}
+			</div>
+		</div>
+		<div class="col-4 px-2">
+		  <form id="filtro-fornitori" target="{% url 'home' %}" method="post">
+		  {% csrf_token %}
+		  <h4>Seleziona tipo fornitori</h4>
+			  {% for field in form %}
+				  <p style="padding: 0; margin: 5px 5px">
+					  {{ field.label }} {{ field }}
+				  </p>
+			  {% endfor %}
+		  </form>
+		</div>
+	</div>
+	<script>
+			$(document).ready(function(){
+			    $("#filtro-fornitori").on("change", "input:checkbox", function(){
+			        $("#filtro-fornitori").submit();
+			    });
+			});
+	</script>
 {% endblock %}
 

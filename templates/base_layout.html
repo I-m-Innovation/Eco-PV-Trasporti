@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,9 +6,19 @@
 	<meta name="viewport"
 	      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+	<!-- DATATABLE LIBRARY -->
+	<link href="{% static 'DataTables/datatables.min.css' %}" rel="stylesheet">
+	<script src="{% static 'DataTables/datatables.min.js' %}"></script>
+
+	<!-- JQUERY LIBRARY -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+	<!-- LOAD BOOTSTRAP -->
 	{% load bootstrap5 %}
   {% bootstrap_css %}
   {% bootstrap_javascript %}
+
 	<title>{% block title %}{% endblock %}</title>
 </head>
 <body>

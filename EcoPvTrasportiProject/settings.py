@@ -28,9 +28,16 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+
+
 # Application definition
 
 INSTALLED_APPS = [
+    # <-- DJANGO AUTOCOMPLETE-FIELDS -->
+    'dal',
+    'dal_select2',
+
+    # <-- DJANGO DEFAULT -->
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

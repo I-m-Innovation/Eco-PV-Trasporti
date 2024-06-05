@@ -1,0 +1,32 @@
+<div class="container">
+	{% if commesse_list.count == 0 %}
+	<div> No data available </div>
+	{% else %}
+	<table class="table table-hover table-responsive table-sm w-100">
+		<thead>
+		<tr>
+			<th>Codice</th>
+			<th>Produttore</th>
+			<th>Garanzia Fin.</th>
+			<th>Q.TA'</th>
+			<th>Tipo</th>
+			<th>Paese</th>
+			<th>Provincia</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for commessa in commesse_list %}
+			<tr>
+				<td>{{ commessa.codice }}</td>
+				<td>{{ commessa.produttore }}</td>
+				<td>{{ commessa.garanzia_fin }}</td>
+				<td>{{ commessa.quantita }}</td>
+				<td>{{ commessa.tipologia }}</td>
+				<td>{{ commessa.paese }}</td>
+				<td>{{ commessa.provincia}}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+</div>
