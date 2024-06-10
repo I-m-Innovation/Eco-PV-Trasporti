@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-4f072rrk3j7fgu_bie-tm_f+g#-ou3f)wta1aenfs+_-cdwqts
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -63,8 +63,7 @@ ROOT_URLCONF = 'EcoPvTrasportiProject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-	    ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

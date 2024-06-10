@@ -17,7 +17,7 @@ def commessa_is_done(modeladmin, request, queryset):
 
 class CommessaAdmin(admin.ModelAdmin):
     form = CommessaForm
-    list_display = ('codice', 'produttore', 'is_done', 'garanzia_fin', 'tipologia', 'quantita', 'paese', 'latitudine', 'longitudine')
+    list_display = ('codice', 'produttore', 'is_done', 'garanzia_fin', 'tipologia', 'quantita', 'paese', 'latitudine', 'longitudine', )
     list_filter = ('garanzia_fin', 'tipologia', 'is_done')
     search_fields = ['codice','produttore']
     search_help_text = 'Cerca commessa (inserire il codice)'
