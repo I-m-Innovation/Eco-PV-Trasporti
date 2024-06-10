@@ -1,0 +1,23 @@
+#toc_container {
+    background: #f9f9f9 none repeat scroll 0 0;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    display: table;
+    font-size: 95%;
+    margin-bottom: 1em;
+    padding: 10px 20px 10px 20px;
+    width: auto;
+}
+
+.toc_title {
+    font-weight: 700;
+    text-align: center;
+}
+
+.toc_list {
+    padding-left: 0.5em;
+}
+
+#toc_container li {
+    margin-bottom: 3px;
+}

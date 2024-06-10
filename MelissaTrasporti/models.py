@@ -13,7 +13,8 @@ class Comune(models.Model):
 
 	class Meta:
 		ordering = ['name']
-		verbose_name_plural = 'comuni'
+		verbose_name_plural = 'Località'
+		verbose_name = 'Località'
 
 	def __str__(self):
 		return '%s, %s, %s' % (self.name, self.provincia, self.cap)
@@ -33,21 +34,42 @@ class Fornitore(models.Model):
 	def __str__(self):
 		return self.ragione_sociale
 
-scelta_garanzia = [('ANTE','ANTE'),('-','-')]
+scelta_garanzia = [('ANTE','ANTE'), ('-','-')]
 
-class Commessa(models.Model):
-	codice = models.CharField(max_length=20, help_text='Codice identificativo commessa', primary_key=True, verbose_name='codice commessa')
+
+class Offerta(models.Model):
+	codice = models.CharField(max_length=20, help_text='Codice identificativo offerta', primary_key=True, verbose_name='codice offerta')
 	produttore = models.CharField(max_length=200, null=False, blank=False, help_text='Produttore del rifiuto')
 	garanzia_fin = models.CharField(choices=scelta_garanzia, max_length=20, default='-', help_text='Garanzia finanziaria', verbose_name='garanzia finanziaria')
 	quantita = models.IntegerField(null=False, blank=False, help_text='Quantità totale di rifiuti', verbose_name='quantità')
 	tipologia = models.TextField(null=False, blank=False, verbose_name='tipologia', help_text='Tipologia di RAEE')
-	paese = models.ForeignKey(Comune, on_delete=models.PROTECT, help_text='CAP - Luogo di ritiro')
+	is_commessa = models.BooleanField(null=False, blank=False, default=False, verbose_name='commessa')
+	paese = models.ForeignKey(Comune, on_delete=models.PROTECT, help_text='CAP - Luogo di ritiro', verbose_name='Località')
+	latitudine = models.FloatField(null=True, blank=True, default=None)
+	longitudine = models.FloatField(null=True, blank=True, default=None)
 
 	class Meta:
-		verbose_name_plural = 'commesse'
+		verbose_name_plural = 'offerte'
 		ordering = ['codice']
 
 	def __str__(self):
+		return '%s, %s, %s' % (self.codice, self.produttore, self.paese)
+
+class Commessa(models.Model):
+	codice = models.CharField(max_length=20, help_text='Codice identificativo commessa', primary_key=True, verbose_name='codice commessa')
+	offerta = models.ForeignKey(Offerta, on_delete=models.PROTECT, verbose_name='offerta di riferimento', blank=True, null=True)
+	produttore = models.CharField(max_length=200, null=False, blank=False, help_text='Produttore del rifiuto')
+	is_done = models.BooleanField(null=False, blank=False, default=False, verbose_name='commessa eseguita')
+	garanzia_fin = models.CharField(choices=scelta_garanzia, max_length=20, default='-',help_text='Garanzia finanziaria', verbose_name='garanzia finanziaria')
+	quantita = models.IntegerField(null=False, blank=False, help_text='Quantità totale di rifiuti', verbose_name='quantità')
+	tipologia = models.TextField(null=False, blank=False, verbose_name='tipologia', help_text='Tipologia di RAEE')
+	paese = models.ForeignKey(Comune, on_delete=models.PROTECT, help_text='CAP - Luogo di ritiro', verbose_name='Località')
+	latitudine = models.FloatField(null=True, blank=True, default=None)
+	longitudine = models.FloatField(null=True, blank=True, default=None)
+
+	class Meta:
+		verbose_name_plural = 'commesse'
+		ordering = ['is_done', 'codice']
+
+	def __str__(self):
 		return self.codice
-
-

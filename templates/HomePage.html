@@ -1,31 +1,131 @@
 {% extends 'base_layout.html' %}
-
 {% load static %}
 
+{% block scripts %}
+	<link rel="stylesheet" href="{% static 'MelissaTrasporti/leaflet-icons/leaflet.awesome-markers.css' %}">
+	<script src="{% static 'MelissaTrasporti/leaflet-icons/leaflet.awesome-markers.js' %}"></script>
+{% endblock %}
+
 {% block content %}
-	<div class="row my-3" >
-		<div class="col-8 px-5">
-			<div class="content" style="border: 2px solid lightgrey; border-radius: 5px">
-				{{ map|safe }}
+	<main style="height: 95%">
+		<div class="row px-5 h-100">
+			<div class="col-6 h-100">
+				<div class="row px-1 py-5" style="height: 100%">
+					<div class="col">
+						<div id="map" style="height: 90%; border-radius: 5px; border: 1px solid lightgrey"></div>
+						<span>&nbsp;</span>
+					  <span style="margin-right: 10px"><i class="fa fa-truck" aria-hidden="true"></i>&nbsp;Trasportatori</span>
+					  <span style="margin-right: 10px"><i class="fa fa-recycle" aria-hidden="true"></i>&nbsp;Centri di smaltimento</span>
+						<span style="margin-right: 10px"><i class="fa fa-refresh" aria-hidden="true"></i>&nbsp;Fornitori completi</span>
+						<span style="margin-right: 10px"><i class="fa fa-circle" aria-hidden="true" style="color:#d43f2c"></i>&nbsp;Commesse </span>
+						<span style="margin-right: 10px"><i class="fa fa-circle" aria-hidden="true" style="color:#d052b8"></i>&nbsp;Commesse "ANTE"</span>
+						<span style="margin-right: 10px"><i class="fa fa-circle" aria-hidden="true" style="color: lightgrey"></i>&nbsp;Offerte</span>
+					</div>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="row px-1 py-5">
+					<div id="toc_container">
+						<p class="toc_title">Links</p>
+						<ol class="toc_list">
+						  <li><a href="{% url 'admin:index' %}MelissaTrasporti/">Gestione commesse e fornitori</a></li>
+							<li><a href="{% url 'admin:index' %}MelissaTrasporti/commessa/add/">Aggiungi nuova commessa</a></li>
+							<li><a href="{% url 'admin:index' %}MelissaTrasporti/fornitore/add/">Aggiungi nuovo fornitore</a></li>
+							<li><a href="{% url 'admin:index' %}MelissaTrasporti/commessa/">Visualizza lista commesse</a></li>
+						</ol>
+					</div>
+				</div>
 			</div>
 		</div>
-		<div class="col-4 px-2">
-		  <form id="filtro-fornitori" target="{% url 'home' %}" method="post">
-		  {% csrf_token %}
-		  <h4>Seleziona tipo fornitori</h4>
-			  {% for field in form %}
-				  <p style="padding: 0; margin: 5px 5px">
-					  {{ field.label }} {{ field }}
-				  </p>
-			  {% endfor %}
-		  </form>
-		</div>
-	</div>
+	</main>
+
+
+	{{ fornitori_list|json_script:"fornitori_json" }}
+
+	{{ commesse_list|json_script:"commesse_json" }}
+	
+	{{ offerte_list|json_script:"offerte_json" }}
+
 	<script>
 			$(document).ready(function(){
-			    $("#filtro-fornitori").on("change", "input:checkbox", function(){
-			        $("#filtro-fornitori").submit();
-			    });
+					let fornitori = JSON.parse(document.getElementById('fornitori_json').textContent);
+					let commesse = JSON.parse(document.getElementById('commesse_json').textContent);
+					let offerte = JSON.parse(document.getElementById('offerte_json').textContent);
+					let icona = {};
+					let colore = {};
+					
+					const baseLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+							maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+					});
+					
+					const layerTrasporto = L.layerGroup();
+					const layerTrattamento = L.layerGroup();
+					const layerCompleti = L.layerGroup();
+					const layerOfferte = L.layerGroup();
+					const layerCommesse = L.layerGroup();
+					
+					fornitori.forEach(fornitore => {
+              if (fornitore.trasporto && fornitore.trattamento) {
+                  L.marker([fornitore.latitudine, fornitore.longitudine], 
+                      {icon: L.AwesomeMarkers.icon({icon: 'refresh', markerColor: 'orange', prefix: 'fa'})
+                      }
+                  ).addTo(layerCompleti)
+              } 
+              else if (fornitore.trasporto){
+                  L.marker([fornitore.latitudine, fornitore.longitudine], 
+                      {icon: L.AwesomeMarkers.icon({icon: 'truck', markerColor: 'darkblue', prefix: 'fa'})
+                      }
+                  ).addTo(layerTrasporto)
+              } 
+              else if (fornitore.trattamento){
+                  L.marker([fornitore.latitudine, fornitore.longitudine], 
+                      {icon: L.AwesomeMarkers.icon({icon: 'recycle', markerColor: 'darkgreen', prefix: 'fa'})
+                      }
+                  ).addTo(layerTrattamento)
+              }
+          });
+					
+					const map = L.map('map',{
+							center: [41.902782, 12.496366], 
+							zoom: 6,
+							layers: [baseLayer, layerTrasporto, layerCommesse, layerOfferte]
+					});
+                    
+					commesse.forEach(commessa => {
+							let url = "{% url 'admin:index' %}MelissaTrasporti/commessa/"+commessa.codice+"/";
+							url = url.replace('CR_', 'CR_5F');
+							let html = `<p style="margin: 5px 0">Commessa: ${commessa.codice}</p>`+
+									`<p style="margin: 5px 0">Quantità: ${commessa.quantita}</p>`+
+									`<p style="margin: 5px 0">Tipologia: ${commessa.tipologia}</p>`+
+									`<p style="margin: 5px 0">Produttore: ${commessa.produttore}</p>`+
+									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettaglio commessa</a></p>`+
+									`<p style="margin: 5px 0">offerta di riferimento: ${commessa.offerta_codice}</p>`
+							
+							let comm_color = 'red'
+							if (commessa.garanzia_fin==='ANTE') {comm_color = 'purple'}
+							L.marker([commessa.paese__latitudine, commessa.paese__longitudine],
+									{icon: L.AwesomeMarkers.icon({icon: 'circle-o', markerColor: comm_color, prefix: 'fa'})}
+							).bindPopup(html).addTo(layerCommesse)
+					});
+                    
+					offerte.forEach(offerta => {
+							let url = "{% url 'admin:index' %}MelissaTrasporti/offerta/"+offerta.codice+"/";
+							url = url.replace('_', '_5F');
+							let html = `<p style="margin: 5px 0">Offerta: ${offerta.codice}</p>`+
+									`<p style="margin: 5px 0">Quantità: ${offerta.quantita}</p>`+
+									`<p style="margin: 5px 0">Tipologia: ${offerta.tipologia}</p>`+
+									`<p style="margin: 5px 0">Produttore: ${offerta.produttore}</p>`+
+									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettaglio offerta</a></p>`
+
+							L.marker([offerta.paese__latitudine, offerta.paese__longitudine],
+									{icon: L.AwesomeMarkers.icon({icon: 'circle-o', markerColor: 'lightgray', prefix: 'fa'})
+									}
+							).bindPopup(html).addTo(layerOfferte)
+					 });
+          
+          const layerControl = L.control.layers({'OpenStreetMap': baseLayer}, {'Trasporto': layerTrasporto, 'Commesse': layerCommesse, 'Offerte': layerOfferte}).addTo(map);
+          layerControl.addOverlay(layerTrattamento, 'Trattamento');
+          layerControl.addOverlay(layerCompleti, 'Trasporto & Trattamento');
 			});
 	</script>
 {% endblock %}

@@ -10,7 +10,6 @@ if __name__=='__main__':
 	DF = DF[columns]
 	DF.fillna('-', inplace=True)
 
-	Fornitore.objects.all().delete()
 	records = []
 	for index, row in DF.iterrows():
 		records.append({key: row[key] for key in columns})

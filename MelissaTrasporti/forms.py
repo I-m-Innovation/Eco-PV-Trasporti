@@ -2,7 +2,7 @@ from django import forms
 
 from dal import autocomplete
 
-from .models import Commessa
+from .models import Commessa,Offerta
 
 
 class SelectTipoFornitori(forms.Form):
@@ -14,6 +14,16 @@ class SelectTipoFornitori(forms.Form):
 class CommessaForm(forms.ModelForm):
     class Meta:
         model = Commessa
+        fields = ('__all__')
+        widgets = {
+            'paese': autocomplete.ModelSelect2(url='comune-autocomplete'),
+            'offerta': autocomplete.ModelSelect2(url='offerta-autocomplete')
+        }
+
+
+class OffertaForm(forms.ModelForm):
+    class Meta:
+        model = Offerta
         fields = ('__all__')
         widgets = {
             'paese': autocomplete.ModelSelect2(url='comune-autocomplete')
