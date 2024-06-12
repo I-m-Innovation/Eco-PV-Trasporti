@@ -4,6 +4,11 @@
 {% block scripts %}
 	<link rel="stylesheet" href="{% static 'MelissaTrasporti/leaflet-icons/leaflet.awesome-markers.css' %}">
 	<script src="{% static 'MelissaTrasporti/leaflet-icons/leaflet.awesome-markers.js' %}"></script>
+	
+	<!-- MARKER CLSUTERS -->
+	<link rel="stylesheet" href="{% static 'MelissaTrasporti/Leaflet.markercluster-1.4.1/dist/MarkerCluster.css' %}" />
+	<link rel="stylesheet" href="{% static 'MelissaTrasporti/Leaflet.markercluster-1.4.1/dist/MarkerCluster.Default.css' %}"/>
+	<script src="{% static 'MelissaTrasporti/Leaflet.markercluster-1.4.1/dist/leaflet.markercluster-src.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -98,9 +103,11 @@
 							maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 					});
 					
-					const layerTrasporto = L.layerGroup();
-					const layerTrattamento = L.layerGroup();
-					const layerCompleti = L.layerGroup();
+					const layerTrasporto = new L.MarkerClusterGroup({
+							maxClusterRadius: 25,
+					});
+					const layerTrattamento = new L.MarkerClusterGroup();
+					const layerCompleti = new L.MarkerClusterGroup();
 					const layerOfferte = L.layerGroup();
 					const layerCommesse = L.layerGroup();
 					

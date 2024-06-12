@@ -57,7 +57,7 @@ class Fornitore(models.Model):
 		return self.ragione_sociale
 
 
-scelta_garanzia = [('ANTE','ANTE'), ('-','-')]
+scelta_garanzia = [('-','-'), ('ANTE','ANTE'), ('REM/ERION','REM/ERION')]
 
 
 class OffertaCommessa(models.Model):
