@@ -15,7 +15,7 @@ if __name__=='__main__':
 		records.append({key: row[key] for key in columns})
 
 	for record in records:
-		Fornitore.objects.get_or_create(
+		Fornitore.objects.create(
 			ragione_sociale=record['RAGIONE SOCIALE'],
 			indirizzo=record['SEDE INDIRIZZO'],
 			trasporto=record['TRASPORTO'] != '-',

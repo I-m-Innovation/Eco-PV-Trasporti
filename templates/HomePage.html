@@ -29,17 +29,28 @@
 						<p class="toc_title">Links</p>
 						<ol class="toc_list">
 						  <li><a href="{% url 'admin:index' %}MelissaTrasporti/">Gestione commesse e fornitori</a></li>
-							<li><a href="{% url 'admin:index' %}MelissaTrasporti/commessa/add/">Aggiungi nuova commessa</a></li>
+							<li><a href="{% url 'admin:index' %}MelissaTrasporti/offertacommessa/add/">Aggiungi nuova commessa</a></li>
 							<li><a href="{% url 'admin:index' %}MelissaTrasporti/fornitore/add/">Aggiungi nuovo fornitore</a></li>
 							<li><a href="{% url 'admin:index' %}MelissaTrasporti/commessa/">Visualizza lista commesse</a></li>
 						</ol>
 					</div>
+					<h4> Lista commesse prese in carico</h4>
+					<table id="table-commesse" class="display compact" style="width: 100%">
+						<thead>
+						<tr>
+							<th>Codice</th>
+							<th>Produttore</th>
+							<th>Garanzia</th>
+							<th>Tipologia</th>
+							<th>Quantita</th>
+						</tr>
+						</thead>
+					</table>
 				</div>
 			</div>
 		</div>
 	</main>
-
-
+	
 	{{ fornitori_list|json_script:"fornitori_json" }}
 
 	{{ commesse_list|json_script:"commesse_json" }}
@@ -53,6 +64,35 @@
 					let offerte = JSON.parse(document.getElementById('offerte_json').textContent);
 					let icona = {};
 					let colore = {};
+                    
+					commesse.forEach(commessa => {
+							if (!commessa.latitudine) {
+									commessa.latitudine = commessa.paese__latitudine;
+									commessa.longitudine = commessa.paese__longitudine;
+							}
+					})
+					
+					offerte.forEach(offerta => {
+							if (!offerta.latitudine) {
+									offerta.latitudine = offerta.paese__latitudine;
+									offerta.longitudine = offerta.paese__longitudine;
+							}
+					})
+                    
+					
+					var tabella = $("#table-commesse")
+							
+					tabella.DataTable ({
+							ordering: false,
+							"data" : commesse, 
+							"columns" : [
+									{ "data" : "codice" }, 
+									{ "data" : "produttore" },
+									{ "data" : "garanzia_fin" }, 
+									{ "data" : "tipologia" }, 
+									{ "data" : "quantita" },
+							]
+					});
 					
 					const baseLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 							maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -65,23 +105,27 @@
 					const layerCommesse = L.layerGroup();
 					
 					fornitori.forEach(fornitore => {
+							let url = "{% url 'admin:index' %}MelissaTrasporti/fornitore/"+fornitore.id+"/";
+							let html = `<p style="margin: 5px 0">Fornitore: ${fornitore.ragione_sociale}</p>`+
+									`<p style="margin: 5px 0">Indirizzo: ${fornitore.indirizzo}</p>`+
+									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettagli fornitore</a></p>`
               if (fornitore.trasporto && fornitore.trattamento) {
                   L.marker([fornitore.latitudine, fornitore.longitudine], 
                       {icon: L.AwesomeMarkers.icon({icon: 'refresh', markerColor: 'orange', prefix: 'fa'})
                       }
-                  ).addTo(layerCompleti)
+                  ).bindPopup(html).addTo(layerCompleti)
               } 
               else if (fornitore.trasporto){
                   L.marker([fornitore.latitudine, fornitore.longitudine], 
                       {icon: L.AwesomeMarkers.icon({icon: 'truck', markerColor: 'darkblue', prefix: 'fa'})
                       }
-                  ).addTo(layerTrasporto)
+                  ).bindPopup(html).addTo(layerTrasporto)
               } 
               else if (fornitore.trattamento){
                   L.marker([fornitore.latitudine, fornitore.longitudine], 
                       {icon: L.AwesomeMarkers.icon({icon: 'recycle', markerColor: 'darkgreen', prefix: 'fa'})
                       }
-                  ).addTo(layerTrattamento)
+                  ).bindPopup(html).addTo(layerTrattamento)
               }
           });
 					
@@ -98,26 +142,25 @@
 									`<p style="margin: 5px 0">Quantità: ${commessa.quantita}</p>`+
 									`<p style="margin: 5px 0">Tipologia: ${commessa.tipologia}</p>`+
 									`<p style="margin: 5px 0">Produttore: ${commessa.produttore}</p>`+
-									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettaglio commessa</a></p>`+
-									`<p style="margin: 5px 0">offerta di riferimento: ${commessa.offerta_codice}</p>`
+									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettagli commessa</a></p>`
 							
 							let comm_color = 'red'
 							if (commessa.garanzia_fin==='ANTE') {comm_color = 'purple'}
-							L.marker([commessa.paese__latitudine, commessa.paese__longitudine],
+							L.marker([commessa.latitudine, commessa.longitudine],
 									{icon: L.AwesomeMarkers.icon({icon: 'circle-o', markerColor: comm_color, prefix: 'fa'})}
 							).bindPopup(html).addTo(layerCommesse)
 					});
                     
 					offerte.forEach(offerta => {
-							let url = "{% url 'admin:index' %}MelissaTrasporti/offerta/"+offerta.codice+"/";
+							let url = "{% url 'admin:index' %}MelissaTrasporti/offertacommessa/"+offerta.codice+"/";
 							url = url.replace('_', '_5F');
 							let html = `<p style="margin: 5px 0">Offerta: ${offerta.codice}</p>`+
 									`<p style="margin: 5px 0">Quantità: ${offerta.quantita}</p>`+
 									`<p style="margin: 5px 0">Tipologia: ${offerta.tipologia}</p>`+
 									`<p style="margin: 5px 0">Produttore: ${offerta.produttore}</p>`+
-									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettaglio offerta</a></p>`
+									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettagli offerta</a></p>`
 
-							L.marker([offerta.paese__latitudine, offerta.paese__longitudine],
+							L.marker([offerta.latitudine, offerta.longitudine],
 									{icon: L.AwesomeMarkers.icon({icon: 'circle-o', markerColor: 'lightgray', prefix: 'fa'})
 									}
 							).bindPopup(html).addTo(layerOfferte)

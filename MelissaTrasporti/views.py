@@ -4,8 +4,7 @@ from django.core import serializers
 
 from dal import autocomplete
 
-from MelissaTrasporti.models import Fornitore, Commessa, Comune, Offerta
-from MelissaTrasporti.forms import SelectTipoFornitori
+from MelissaTrasporti.models import Fornitore, Commessa, Comune, OffertaCommessa
 
 import folium
 import numpy as np
@@ -26,17 +25,6 @@ class ComuneAutocomplete(autocomplete.Select2QuerySetView):
             qs = qs.filter(name__icontains=self.q) | qs.filter(cap__istartswith=self.q) | qs.filter(provincia__istartswith=self.q)
         return qs
 
-class OffertaAutocomplete(autocomplete.Select2QuerySetView):
-    def get_queryset(self):
-        # Don't forget to filter out results depending on the visitor !
-        if not self.request.user.is_authenticated:
-            return Offerta.objects.none()
-
-        qs = Offerta.objects.all()
-        if self.q:
-            qs = qs.filter(codice__icontains=self.q) | qs.filter(codice__istartswith=self.q) | qs.filter(produttore__icontains=self.q) | qs.filter(produttore__istartswith=self.q)
-        return qs
-
 
 def home(request):
     fornitori = list(Fornitore.objects.values())
@@ -46,18 +34,21 @@ def home(request):
         'garanzia_fin',
         'quantita',
         'tipologia',
+        'latitudine',
+        'longitudine',
         'paese__latitudine',
         'paese__longitudine',
         'paese__name',
         'paese__provincia',
-        'offerta__codice',
     ))
-    offerte = list(Offerta.objects.filter(is_commessa=False).values(
+    offerte = list(OffertaCommessa.objects.filter(is_commessa=False).values(
         'codice',
         'produttore',
         'garanzia_fin',
         'quantita',
         'tipologia',
+        'latitudine',
+        'longitudine',
         'paese__latitudine',
         'paese__longitudine',
         'paese__name',

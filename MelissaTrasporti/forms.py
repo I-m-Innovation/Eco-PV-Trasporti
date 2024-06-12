@@ -2,29 +2,50 @@ from django import forms
 
 from dal import autocomplete
 
-from .models import Commessa,Offerta
+from .models import Fornitore, OffertaCommessa, Commessa
 
 
-class SelectTipoFornitori(forms.Form):
-    trasporto = forms.BooleanField(label='Solo trasporto', required=False,)
-    trattamento = forms.BooleanField(label='Solo trattamento', required=False,)
-    completo = forms.BooleanField(label='Trasporto e Trattamento', required=False,)
+class FornitoreForm(forms.ModelForm):
+    class Meta:
+        model = Fornitore
+        fields = ('__all__')
+        widgets = {
+            'paese': autocomplete.ModelSelect2(url='comune-autocomplete'),
+        }
 
 
 class CommessaForm(forms.ModelForm):
     class Meta:
         model = Commessa
-        fields = ('__all__')
+        fields = ['codice',
+                  'produttore',
+                  'is_done',
+                  'garanzia_fin',
+                  'tipologia',
+                  'quantita',
+                  'note',
+                  'paese',
+                  'latitudine',
+                  'longitudine',
+                  'is_commessa']
         widgets = {
             'paese': autocomplete.ModelSelect2(url='comune-autocomplete'),
-            'offerta': autocomplete.ModelSelect2(url='offerta-autocomplete')
         }
 
 
-class OffertaForm(forms.ModelForm):
+class OffertaCommessaForm(forms.ModelForm):
     class Meta:
-        model = Offerta
-        fields = ('__all__')
+        model = OffertaCommessa
+        fields = ['codice',
+                  'produttore',
+                  'garanzia_fin',
+                  'tipologia',
+                  'quantita',
+                  'note',
+                  'paese',
+                  'latitudine',
+                  'longitudine',
+                  'is_commessa']
         widgets = {
-            'paese': autocomplete.ModelSelect2(url='comune-autocomplete')
+            'paese': autocomplete.ModelSelect2(url='comune-autocomplete'),
         }

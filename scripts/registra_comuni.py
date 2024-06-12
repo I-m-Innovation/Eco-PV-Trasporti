@@ -16,8 +16,9 @@ if __name__=='__main__':
 	for index, row in DF.iterrows():
 		records.append({key: row[key] for key in columns})
 
+	Comune.objects.all().delete()
 	for record in records:
-		Comune.objects.get_or_create(
+		Comune.objects.create(
 			cap=record['cap'],
 			name=record['denominazione_ita'],
 			provincia=record['sigla_provincia'],

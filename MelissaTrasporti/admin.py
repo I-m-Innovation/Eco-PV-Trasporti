@@ -1,18 +1,24 @@
 from django.contrib import admin
 
-from .models import Fornitore, Commessa, Offerta
-from .forms import CommessaForm, OffertaForm
+from .models import Fornitore, OffertaCommessa, Commessa
+from .forms import CommessaForm, OffertaCommessaForm, FornitoreForm
 
 
 class FornitoreAdmin(admin.ModelAdmin):
-    list_display = ('ragione_sociale', 'trasporto', 'trattamento', 'indirizzo')
+    form = FornitoreForm
+    list_display = ('ragione_sociale', 'trasporto', 'trattamento', 'indirizzo', 'paese', 'latitudine', 'longitudine')
     search_fields = ['ragione_sociale',]
     search_help_text = 'Cerca fornitore'
 
 
-@admin.action(description="Contrassegna le commesse come effettuate")
+@admin.action(description="Contrassegna come effettuate")
 def commessa_is_done(modeladmin, request, queryset):
     queryset.update(is_done=True)
+
+
+@admin.action(description="Trasforma in commessa")
+def offerta_to_commessa(modeladmin, request, queryset):
+    queryset.update(is_commessa=True)
 
 
 class CommessaAdmin(admin.ModelAdmin):
@@ -24,17 +30,17 @@ class CommessaAdmin(admin.ModelAdmin):
     actions = [commessa_is_done]
 
 
-class OffertaAdmin(admin.ModelAdmin):
-    form = OffertaForm
+class OffertaCommessaAdmin(admin.ModelAdmin):
+    form = OffertaCommessaForm
     list_display = ('codice', 'produttore', 'is_commessa', 'garanzia_fin', 'tipologia', 'quantita', 'paese', 'latitudine', 'longitudine')
-    list_filter = ('garanzia_fin', 'tipologia',)
+    list_filter = ('garanzia_fin', 'tipologia', 'is_commessa')
     search_fields = ['codice','produttore']
     search_help_text = 'Cerca offerta (inserire il codice)'
 
 
 admin.site.register(Fornitore, FornitoreAdmin)
 admin.site.register(Commessa, CommessaAdmin)
-admin.site.register(Offerta, OffertaAdmin)
+admin.site.register(OffertaCommessa, OffertaCommessaAdmin)
 
 
 

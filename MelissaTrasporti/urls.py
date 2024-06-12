@@ -13,10 +13,5 @@ urlpatterns = [
         views.ComuneAutocomplete.as_view(),
         name='comune-autocomplete',
     ),
-    re_path(
-        r'^offerta-autocomplete/$',
-        views.OffertaAutocomplete.as_view(),
-        name='offerta-autocomplete',
-    ),
 ]
 

@@ -44,9 +44,15 @@ INSTALLED_APPS = [
 
     'bootstrap5',
 
+    # <-- DJANGO backup -->
+    'dbbackup',
+
     # <-- DJANGO APPS -->
     'MelissaTrasporti.apps.MelissatrasportiConfig',
 ]
+
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_STORAGE_OPTIONS = {'location': BASE_DIR / 'backups'}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
