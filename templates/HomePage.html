@@ -136,12 +136,12 @@
 					});
                     
 					commesse.forEach(commessa => {
-							let url = "{% url 'admin:index' %}MelissaTrasporti/commessa/"+commessa.codice+"/";
-							url = url.replace('CR_', 'CR_5F');
+							let url = "{% url 'admin:index' %}MelissaTrasporti/commessa/"+commessa.id+"/";
 							let html = `<p style="margin: 5px 0">Commessa: ${commessa.codice}</p>`+
 									`<p style="margin: 5px 0">Quantità: ${commessa.quantita}</p>`+
 									`<p style="margin: 5px 0">Tipologia: ${commessa.tipologia}</p>`+
 									`<p style="margin: 5px 0">Produttore: ${commessa.produttore}</p>`+
+									`<p style="margin: 5px 0">note: ${commessa.note}</p>`+
 									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettagli commessa</a></p>`
 							
 							let comm_color = 'red'
@@ -152,12 +152,12 @@
 					});
                     
 					offerte.forEach(offerta => {
-							let url = "{% url 'admin:index' %}MelissaTrasporti/offertacommessa/"+offerta.codice+"/";
-							url = url.replace('_', '_5F');
+							let url = "{% url 'admin:index' %}MelissaTrasporti/offertacommessa/"+offerta.id+"/";
 							let html = `<p style="margin: 5px 0">Offerta: ${offerta.codice}</p>`+
 									`<p style="margin: 5px 0">Quantità: ${offerta.quantita}</p>`+
 									`<p style="margin: 5px 0">Tipologia: ${offerta.tipologia}</p>`+
 									`<p style="margin: 5px 0">Produttore: ${offerta.produttore}</p>`+
+									`<p style="margin: 5px 0">note: ${offerta.note}</p>`+
 									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettagli offerta</a></p>`
 
 							L.marker([offerta.latitudine, offerta.longitudine],

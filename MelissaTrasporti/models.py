@@ -61,7 +61,7 @@ scelta_garanzia = [('ANTE','ANTE'), ('-','-')]
 
 
 class OffertaCommessa(models.Model):
-	codice = models.CharField(max_length=20, help_text='Codice identificativo', primary_key=True, verbose_name='codice')
+	codice = models.CharField(max_length=20, help_text='Codice identificativo', db_index=True, verbose_name='codice', unique=True)
 	produttore = models.CharField(max_length=200, null=False, blank=False, help_text='Produttore del rifiuto')
 	garanzia_fin = models.CharField(choices=scelta_garanzia, max_length=20, default='-', help_text='Garanzia finanziaria', verbose_name='garanzia finanziaria')
 	quantita = models.IntegerField(null=False, blank=False, help_text='Quantità totale di rifiuti', verbose_name='quantità')
@@ -82,7 +82,10 @@ class OffertaCommessa(models.Model):
 		verbose_name = 'offerta - commessa'
 
 	def __str__(self):
-		return '%s, %s, %s' % (self.codice, self.produttore, self.paese)
+		if self.paese:
+			return '%s, %s, %s' % (self.codice, self.produttore, self.paese)
+		else:
+			return '%s, %s' % (self.codice, self.produttore)
 
 
 class CommessaManager(models.Manager):

@@ -29,10 +29,12 @@ class ComuneAutocomplete(autocomplete.Select2QuerySetView):
 def home(request):
     fornitori = list(Fornitore.objects.values())
     commesse = list(Commessa.objects.filter(is_done=False).values(
+        'id',
         'codice',
         'produttore',
         'garanzia_fin',
         'quantita',
+        'note',
         'tipologia',
         'latitudine',
         'longitudine',
@@ -42,10 +44,12 @@ def home(request):
         'paese__provincia',
     ))
     offerte = list(OffertaCommessa.objects.filter(is_commessa=False).values(
+        'id',
         'codice',
         'produttore',
         'garanzia_fin',
         'quantita',
+        'note',
         'tipologia',
         'latitudine',
         'longitudine',

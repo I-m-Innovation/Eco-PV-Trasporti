@@ -23,7 +23,7 @@ def offerta_to_commessa(modeladmin, request, queryset):
 
 class CommessaAdmin(admin.ModelAdmin):
     form = CommessaForm
-    list_display = ('codice', 'produttore', 'is_done', 'garanzia_fin', 'tipologia', 'quantita', 'paese', 'latitudine', 'longitudine', )
+    list_display = ('id','codice', 'produttore', 'is_done', 'garanzia_fin', 'tipologia', 'quantita', 'paese', 'note', 'latitudine', 'longitudine', )
     list_filter = ('garanzia_fin', 'tipologia', 'is_done')
     search_fields = ['codice','produttore']
     search_help_text = 'Cerca commessa (inserire il codice)'
@@ -32,10 +32,11 @@ class CommessaAdmin(admin.ModelAdmin):
 
 class OffertaCommessaAdmin(admin.ModelAdmin):
     form = OffertaCommessaForm
-    list_display = ('codice', 'produttore', 'is_commessa', 'garanzia_fin', 'tipologia', 'quantita', 'paese', 'latitudine', 'longitudine')
+    list_display = ('id','codice', 'produttore', 'is_commessa', 'garanzia_fin', 'tipologia', 'quantita', 'paese', 'note', 'latitudine', 'longitudine')
     list_filter = ('garanzia_fin', 'tipologia', 'is_commessa')
     search_fields = ['codice','produttore']
     search_help_text = 'Cerca offerta (inserire il codice)'
+    actions = [offerta_to_commessa]
 
 
 admin.site.register(Fornitore, FornitoreAdmin)
