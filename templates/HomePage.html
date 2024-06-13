@@ -5,7 +5,7 @@
 	<link rel="stylesheet" href="{% static 'MelissaTrasporti/leaflet-icons/leaflet.awesome-markers.css' %}">
 	<script src="{% static 'MelissaTrasporti/leaflet-icons/leaflet.awesome-markers.js' %}"></script>
 	
-	<!-- MARKER CLSUTERS -->
+	<!-- MARKER CLUSTERS -->
 	<link rel="stylesheet" href="{% static 'MelissaTrasporti/Leaflet.markercluster-1.4.1/dist/MarkerCluster.css' %}" />
 	<link rel="stylesheet" href="{% static 'MelissaTrasporti/Leaflet.markercluster-1.4.1/dist/MarkerCluster.Default.css' %}"/>
 	<script src="{% static 'MelissaTrasporti/Leaflet.markercluster-1.4.1/dist/leaflet.markercluster-src.js' %}"></script>
@@ -83,7 +83,6 @@
 									offerta.longitudine = offerta.paese__longitudine;
 							}
 					})
-                    
 					
 					var tabella = $("#table-commesse")
 							
@@ -96,6 +95,26 @@
 									{ "data" : "garanzia_fin" }, 
 									{ "data" : "tipologia" }, 
 									{ "data" : "quantita" },
+									{ // DEFINISCO LA COLONNA PER LE POSIZIONI
+											className: 'details-control', 
+											orderable: false, 
+											data: null, 
+											defaultContent: '-'
+									},
+							],
+							columnDefs: [ 
+                  {target: 5, // DEFINISCO LA COLONNA CON LE POSIZIONI
+		                  render: function ( data, type, row, meta ) {
+				                  if (row.latitudine && row.longitudine) {
+						                  pos = `[${row.latitudine},${row.longitudine}]`
+						                  return '<a href="" class="marker" value="'+pos+'">Vedi</a>'
+				                  }
+				                  else {
+						                  pos = `[${row.paese__latitudine},${row.paese__longitudine}]`
+						                  return '<a href="" class="marker" value="'+pos+'">Posizione</a>'
+				                  }
+		                  }
+                  }
 							]
 					});
 					
@@ -103,13 +122,15 @@
 							maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 					});
 					
-					const layerTrasporto = new L.MarkerClusterGroup({
-							maxClusterRadius: 25,
-					});
-					const layerTrattamento = new L.MarkerClusterGroup();
-					const layerCompleti = new L.MarkerClusterGroup();
-					const layerOfferte = L.layerGroup();
-					const layerCommesse = L.layerGroup();
+					const layerTrasporto = L.layerGroup();
+					const layerTrattamento =  L.layerGroup();
+					const layerCompleti =  L.layerGroup();
+					const layerOfferte = new L.MarkerClusterGroup({
+              maxClusterRadius: 40,
+          });
+					const layerCommesse = new L.MarkerClusterGroup({
+              maxClusterRadius: 40,
+          });
 					
 					fornitori.forEach(fornitore => {
 							let url = "{% url 'admin:index' %}MelissaTrasporti/fornitore/"+fornitore.id+"/";
@@ -136,7 +157,7 @@
               }
           });
 					
-					const map = L.map('map',{
+					var map = L.map('map',{
 							center: [41.902782, 12.496366], 
 							zoom: 6,
 							layers: [baseLayer, layerTrasporto, layerCommesse, layerOfferte]
@@ -176,6 +197,12 @@
           const layerControl = L.control.layers({'OpenStreetMap': baseLayer}, {'Trasporto': layerTrasporto, 'Commesse': layerCommesse, 'Offerte': layerOfferte}).addTo(map);
           layerControl.addOverlay(layerTrattamento, 'Trattamento');
           layerControl.addOverlay(layerCompleti, 'Trasporto & Trattamento');
+          
+					$('#table-commesse tbody').on('click', 'td.details-control', function (e) {
+							e.preventDefault();
+							map.panTo(JSON.parse($(this).context.firstChild.attributes.value.value));  
+							{#console.log(JSON.parse($(this).context.firstChild.attributes.value.value));#}
+					});
 			});
 	</script>
 {% endblock %}
