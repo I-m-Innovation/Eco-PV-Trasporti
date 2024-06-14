@@ -40,7 +40,7 @@
 						</ol>
 					</div>
 					<h4> Lista commesse prese in carico</h4>
-					<table id="table-commesse" class="display compact" style="width: 100%">
+					<table id="table-commesse" class="table table-striped compact" style="width: 100%">
 						<thead>
 						<tr>
 							<th>Codice</th>
@@ -88,6 +88,30 @@
 							
 					tabella.DataTable ({
 							ordering: false,
+							language: {
+									decimal: '',
+									"emptyTable": "Nessun dato disponibile",
+									"info": "Da _START_ a _END_ di _TOTAL_ righe",
+									"infoEmpty": "Da 0 a 0 di 0 entries",
+									"infoFiltered": "(filtered from _MAX_ total entries)", 
+									"infoPostFix": "",
+									"thousands": ".",
+									"lengthMenu":     "Mostra _MENU_ righe",
+									"loadingRecords": "Loading...",
+									"processing":     "",
+									"search":         "Cerca: ",
+									"zeroRecords":    "Nessun risutlato trovato",
+									"paginate": {
+											"first":      "Prima scheda",
+											"last":       "Last",
+											"next":       "Next",
+											"previous":   "Ultima scheda"
+									},
+									"aria": {
+										        "orderable":  "Order by this column",
+											"orderableReverse": "Reverse order this column"
+									}
+							},
 							"data" : commesse, 
 							"columns" : [
 									{ "data" : "codice" }, 

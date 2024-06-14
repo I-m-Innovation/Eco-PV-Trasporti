@@ -28,6 +28,7 @@ class CommessaAdmin(admin.ModelAdmin):
     search_fields = ['codice','produttore']
     search_help_text = 'Cerca commessa (inserire il codice)'
     actions = [commessa_is_done]
+    list_per_page = 50
 
 
 class OffertaCommessaAdmin(admin.ModelAdmin):
@@ -37,6 +38,7 @@ class OffertaCommessaAdmin(admin.ModelAdmin):
     search_fields = ['codice','produttore']
     search_help_text = 'Cerca offerta (inserire il codice)'
     actions = [offerta_to_commessa]
+    list_per_page = 50
 
 
 admin.site.register(Fornitore, FornitoreAdmin)
