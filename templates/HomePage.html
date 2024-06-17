@@ -13,11 +13,11 @@
 
 {% block content %}
 	<main style="height: 95%">
-		<div class="row px-5 h-100">
+		<div class="row px-4 h-100">
 			<div class="col-6 h-100">
-				<div class="row px-1 py-5" style="height: 100%">
+				<div class="row px-1 py-4" style="height: 100%">
 					<div class="col">
-						<div id="map" style="height: 90%; border-radius: 5px; border: 1px solid lightgrey"></div>
+						<div id="map" style="height: 85%; border-radius: 5px; border: 1px solid lightgrey"></div>
 						<span>&nbsp;</span>
 					  <span style="margin-right: 10px"><i class="fa fa-truck" aria-hidden="true"></i>&nbsp;Trasportatori</span>
 					  <span style="margin-right: 10px"><i class="fa fa-recycle" aria-hidden="true"></i>&nbsp;Centri di smaltimento</span>
@@ -30,27 +30,25 @@
 			</div>
 			<div class="col-6">
 				<div class="row px-1 py-5">
-					<div id="toc_container">
-						<p class="toc_title">Links</p>
-						<ol class="toc_list">
-						  <li><a href="{% url 'admin:index' %}MelissaTrasporti/">Gestione commesse e fornitori</a></li>
-							<li><a href="{% url 'admin:index' %}MelissaTrasporti/offertacommessa/add/">Aggiungi nuova commessa</a></li>
-							<li><a href="{% url 'admin:index' %}MelissaTrasporti/fornitore/add/">Aggiungi nuovo fornitore</a></li>
-							<li><a href="{% url 'admin:index' %}MelissaTrasporti/commessa/">Visualizza lista commesse</a></li>
-						</ol>
-					</div>
 					<h4> Lista commesse prese in carico</h4>
 					<table id="table-commesse" class="table table-striped compact" style="width: 100%">
 						<thead>
-						<tr>
+						<tr style="text-align: center">
 							<th>Codice</th>
 							<th>Produttore</th>
 							<th>Garanzia</th>
 							<th>Tipologia</th>
 							<th>Quantita</th>
+							<th>Località</th>
+							<th style="text-align: center">Posizione</th>
 						</tr>
 						</thead>
 					</table>
+					<span style="font-weight: bold">Links</span><br>
+					<span><i class="fa fa-external-link" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/">Gestione commesse e fornitori</a></span>
+					<span><i class="fa fa-plus-square-o" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/offertacommessa/add/">Aggiungi nuova offerta/commessa</a></span>
+					<span><i class="fa fa-user-plus" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/fornitore/add/">Aggiungi nuovo fornitore</a></span>
+					<span><i class="fa fa-list-ul" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/commessa/">Visualizza lista commesse</a></span>
 				</div>
 			</div>
 		</div>
@@ -66,6 +64,10 @@
 			$(document).ready(function(){
 					let fornitori = JSON.parse(document.getElementById('fornitori_json').textContent);
 					let commesse = JSON.parse(document.getElementById('commesse_json').textContent);
+					commesse.forEach(commessa => {
+							commessa.paese__name = commessa.paese__name + ', ' + commessa.paese__provincia
+					});
+					console.log(commesse);
 					let offerte = JSON.parse(document.getElementById('offerte_json').textContent);
 					let icona = {};
 					let colore = {};
@@ -97,20 +99,15 @@
 									"infoPostFix": "",
 									"thousands": ".",
 									"lengthMenu":     "Mostra _MENU_ righe",
-									"loadingRecords": "Loading...",
 									"processing":     "",
 									"search":         "Cerca: ",
 									"zeroRecords":    "Nessun risutlato trovato",
 									"paginate": {
 											"first":      "Prima scheda",
-											"last":       "Last",
-											"next":       "Next",
-											"previous":   "Ultima scheda"
+											"last":       "Ultima scheda",
+											"next":       "Prossima",
+											"previous":   "Precedente"
 									},
-									"aria": {
-										        "orderable":  "Order by this column",
-											"orderableReverse": "Reverse order this column"
-									}
 							},
 							"data" : commesse, 
 							"columns" : [
@@ -119,6 +116,7 @@
 									{ "data" : "garanzia_fin" }, 
 									{ "data" : "tipologia" }, 
 									{ "data" : "quantita" },
+									{ "data" : "paese__name" },
 									{ // DEFINISCO LA COLONNA PER LE POSIZIONI
 											className: 'details-control', 
 											orderable: false, 
@@ -127,7 +125,7 @@
 									},
 							],
 							columnDefs: [ 
-                  {target: 5, // DEFINISCO LA COLONNA CON LE POSIZIONI
+                  {target: 6, // DEFINISCO LA COLONNA CON LE POSIZIONI
 		                  render: function ( data, type, row, meta ) {
 				                  if (row.latitudine && row.longitudine) {
 						                  pos = `[${row.latitudine},${row.longitudine}]`
@@ -135,10 +133,10 @@
 				                  }
 				                  else {
 						                  pos = `[${row.paese__latitudine},${row.paese__longitudine}]`
-						                  return '<a href="" class="marker" value="'+pos+'">Posizione</a>'
+						                  return '<a href="" class="marker" value="'+pos+'">Vedi</a>'
 				                  }
 		                  }
-                  }
+                  }, {target: [1,2,3,4,5,6], className: 'text-center'}
 							]
 					});
 					
@@ -216,7 +214,7 @@
 									{icon: L.AwesomeMarkers.icon({icon: 'circle-o', markerColor: 'lightgray', prefix: 'fa'})
 									}
 							).bindPopup(html).addTo(layerOfferte)
-					 });
+					});
           
           const layerControl = L.control.layers({'OpenStreetMap': baseLayer}, {'Trasporto': layerTrasporto, 'Commesse': layerCommesse, 'Offerte': layerOfferte}).addTo(map);
           layerControl.addOverlay(layerTrattamento, 'Trattamento');
