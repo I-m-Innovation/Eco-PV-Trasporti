@@ -13,11 +13,12 @@
 
 {% block content %}
 	<main style="height: 95%">
-		<div class="row px-4 h-100">
+	<div class="container-fluid px-5 h-100">
+		<div class="row gx-5 h-100">
 			<div class="col-6 h-100">
-				<div class="row px-1 py-4" style="height: 100%">
+				<div class="row py-5" style="height: 100%">
 					<div class="col">
-						<div id="map" style="height: 85%; border-radius: 5px; border: 1px solid lightgrey"></div>
+						<div id="map" style="height: 95%; border-radius: 5px; border: 1px solid lightgrey"></div>
 						<span>&nbsp;</span>
 					  <span style="margin-right: 10px"><i class="fa fa-truck" aria-hidden="true"></i>&nbsp;Trasportatori</span>
 					  <span style="margin-right: 10px"><i class="fa fa-recycle" aria-hidden="true"></i>&nbsp;Centri di smaltimento</span>
@@ -29,8 +30,14 @@
 				</div>
 			</div>
 			<div class="col-6">
-				<div class="row px-1 py-5">
-					<h4> Lista commesse prese in carico</h4>
+				<div class="row py-5">
+					<span style="font-weight: bold">Links</span><br>
+					<span><i class="fa fa-external-link" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/">Gestione commesse e fornitori</a></span>
+					<span><i class="fa fa-plus-square-o" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/offertacommessa/add/">Aggiungi nuova offerta/commessa</a></span>
+					<span><i class="fa fa-user-plus" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/fornitore/add/">Aggiungi nuovo fornitore</a></span>
+					<span><i class="fa fa-list-ul" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/commessa/">Visualizza lista commesse</a></span>
+					<p></p><hr>
+					<h4 style="font-weight: bold"> Lista commesse prese in carico</h4>
 					<table id="table-commesse" class="table table-striped compact" style="width: 100%">
 						<thead>
 						<tr style="text-align: center">
@@ -44,14 +51,10 @@
 						</tr>
 						</thead>
 					</table>
-					<span style="font-weight: bold">Links</span><br>
-					<span><i class="fa fa-external-link" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/">Gestione commesse e fornitori</a></span>
-					<span><i class="fa fa-plus-square-o" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/offertacommessa/add/">Aggiungi nuova offerta/commessa</a></span>
-					<span><i class="fa fa-user-plus" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/fornitore/add/">Aggiungi nuovo fornitore</a></span>
-					<span><i class="fa fa-list-ul" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/commessa/">Visualizza lista commesse</a></span>
 				</div>
 			</div>
 		</div>
+	</div>
 	</main>
 	
 	{{ fornitori_list|json_script:"fornitori_json" }}
