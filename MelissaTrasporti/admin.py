@@ -9,6 +9,8 @@ class FornitoreAdmin(admin.ModelAdmin):
     list_display = ('ragione_sociale', 'trasporto', 'trattamento', 'indirizzo', 'paese', 'latitudine', 'longitudine')
     search_fields = ['ragione_sociale',]
     search_help_text = 'Cerca fornitore'
+    list_max_show_all = 100
+    list_per_page = 30
 
 
 @admin.action(description="Contrassegna come effettuate")
@@ -28,7 +30,8 @@ class CommessaAdmin(admin.ModelAdmin):
     search_fields = ['codice','produttore']
     search_help_text = 'Cerca commessa (inserire il codice)'
     actions = [commessa_is_done]
-    list_per_page = 50
+    list_max_show_all = 100
+    list_per_page = 30
 
 
 class OffertaCommessaAdmin(admin.ModelAdmin):
