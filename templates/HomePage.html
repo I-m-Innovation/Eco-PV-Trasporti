@@ -150,12 +150,8 @@
 					const layerTrasporto = L.layerGroup();
 					const layerTrattamento =  L.layerGroup();
 					const layerCompleti =  L.layerGroup();
-					const layerOfferte = new L.MarkerClusterGroup({
-              maxClusterRadius: 40,
-          });
-					const layerCommesse = new L.MarkerClusterGroup({
-              maxClusterRadius: 40,
-          });
+					const layerOfferte = L.layerGroup();
+					const layerCommesse = L.layerGroup();
 					
 					fornitori.forEach(fornitore => {
 							let url = "{% url 'admin:index' %}MelissaTrasporti/fornitore/"+fornitore.id+"/";
@@ -185,8 +181,12 @@
 					var map = L.map('map',{
 							center: [41.902782, 12.496366], 
 							zoom: 6,
-							layers: [baseLayer, layerTrasporto, layerCommesse, layerOfferte]
+							layers: [baseLayer, layerTrasporto]
 					});
+                    
+					const layerControl = L.control.layers({'OpenStreetMap': baseLayer}, {'Trasporto': layerTrasporto, 'Commesse': layerCommesse, 'Offerte': layerOfferte}).addTo(map);
+          layerControl.addOverlay(layerTrattamento, 'Trattamento');
+          layerControl.addOverlay(layerCompleti, 'Trasporto & Trattamento');
                     
 					commesse.forEach(commessa => {
 							let url = "{% url 'admin:index' %}MelissaTrasporti/commessa/"+commessa.id+"/";
@@ -218,10 +218,10 @@
 									}
 							).bindPopup(html).addTo(layerOfferte)
 					});
-          
-          const layerControl = L.control.layers({'OpenStreetMap': baseLayer}, {'Trasporto': layerTrasporto, 'Commesse': layerCommesse, 'Offerte': layerOfferte}).addTo(map);
-          layerControl.addOverlay(layerTrattamento, 'Trattamento');
-          layerControl.addOverlay(layerCompleti, 'Trasporto & Trattamento');
+                    
+					const cluster_layer = new L.MarkerClusterGroup().addTo(map);
+					cluster_layer.addLayers([layerOfferte, layerCommesse]);
+					
           
 					$('#table-commesse tbody').on('click', 'td.details-control', function (e) {
 							e.preventDefault();
