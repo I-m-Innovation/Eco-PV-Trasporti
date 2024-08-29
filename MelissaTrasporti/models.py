@@ -88,15 +88,32 @@ class OffertaCommessa(models.Model):
 			return '%s, %s' % (self.codice, self.produttore)
 
 
+
 class CommessaManager(models.Manager):
 	def get_queryset(self):
-		return super(CommessaManager, self).get_queryset().filter(is_commessa=True)
+		return super(CommessaManager, self).get_queryset().filter(is_commessa=True, is_done=False)
 
 
 class Commessa(OffertaCommessa):
 	objects = CommessaManager()
+
 	class Meta:
 		proxy = True
 		verbose_name_plural = 'commesse'
 		ordering = ['codice']
 		verbose_name = 'commessa'
+
+
+class CommessaEvasaManager(models.Manager):
+	def get_queryset(self):
+		return super(CommessaEvasaManager, self).get_queryset().filter(is_commessa=True, is_done=True)
+
+
+class CommessaEvasa(OffertaCommessa):
+	objects = CommessaEvasaManager()
+
+	class Meta:
+		proxy = True
+		verbose_name_plural = 'commesse evase'
+		ordering = ['codice']
+		verbose_name = 'commessa evasa'

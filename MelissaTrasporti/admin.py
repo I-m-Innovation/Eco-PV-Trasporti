@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import Fornitore, OffertaCommessa, Commessa
-from .forms import CommessaForm, OffertaCommessaForm, FornitoreForm
+from .models import *
+from .forms import *
 
 
 class FornitoreAdmin(admin.ModelAdmin):
@@ -26,10 +26,19 @@ def offerta_to_commessa(modeladmin, request, queryset):
 class CommessaAdmin(admin.ModelAdmin):
     form = CommessaForm
     list_display = ('id','codice', 'produttore', 'is_done', 'garanzia_fin', 'tipologia', 'quantita', 'paese', 'note', 'latitudine', 'longitudine', )
-    list_filter = ('garanzia_fin', 'tipologia', 'is_done')
+    list_filter = ('garanzia_fin', 'tipologia')
     search_fields = ['codice','produttore']
     search_help_text = 'Cerca commessa (inserire il codice)'
     actions = [commessa_is_done]
+    list_max_show_all = 100
+    list_per_page = 30
+
+
+class CommessaEvasaAdmin(admin.ModelAdmin):
+    list_display = ('id','codice', 'produttore', 'is_done', 'garanzia_fin', 'tipologia', 'quantita', 'paese', 'note', 'latitudine', 'longitudine')
+    list_filter = ('garanzia_fin', 'tipologia')
+    search_fields = ['codice','produttore']
+    search_help_text = 'Cerca commessa (inserire il codice)'
     list_max_show_all = 100
     list_per_page = 30
 
@@ -44,9 +53,18 @@ class OffertaCommessaAdmin(admin.ModelAdmin):
     list_per_page = 50
 
 
+class ComuneAdmin(admin.ModelAdmin):
+    list_display = ('id', 'cap', 'name', 'provincia', 'latitudine', 'longitudine')
+    list_filter = ('cap', 'name', 'provincia')
+    search_fields = ['id', 'cap', 'name', 'provincia', 'latitudine', 'longitudine']
+    list_per_page = 50
+
+
 admin.site.register(Fornitore, FornitoreAdmin)
 admin.site.register(Commessa, CommessaAdmin)
+admin.site.register(CommessaEvasa, CommessaEvasaAdmin)
 admin.site.register(OffertaCommessa, OffertaCommessaAdmin)
+admin.site.register(Comune, ComuneAdmin)
 
 
 

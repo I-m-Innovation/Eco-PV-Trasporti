@@ -225,8 +225,7 @@
           
 					$('#table-commesse tbody').on('click', 'td.details-control', function (e) {
 							e.preventDefault();
-							map.panTo(JSON.parse($(this).context.firstChild.attributes.value.value));  
-							{#console.log(JSON.parse($(this).context.firstChild.attributes.value.value));#}
+							map.panTo(JSON.parse($(this).context.firstChild.attributes.value.value));
 					});
 			});
 	</script>
