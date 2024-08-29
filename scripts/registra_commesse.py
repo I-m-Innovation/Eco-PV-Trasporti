@@ -9,8 +9,8 @@ if __name__=='__main__':
 	columns = ['codice', 'produttore', 'garanzia_fin', 'quantita', 'tipologia', 'note', 'paese', 'latitudine', 'longitudine', 'is_commessa', 'is_done']
 	DF = DF[columns]
 	DF['note'] = DF['note'].fillna('-')
-
 	records = []
+
 	for index, row in DF.iterrows():
 		records.append(
 			OffertaCommessa(
