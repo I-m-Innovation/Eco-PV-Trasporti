@@ -1,0 +1,329 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mappa Commesse e Offerte</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- Aggiungi questa riga per includere correttamente lo script -->
+    <script src="{% static 'js/script.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <!-- Aggiungi stili CSS per i marker e i cluster -->
+    <style>
+        /* Stili per i marker sulla mappa */
+        .marker-commessa {
+            color: #e74c3c;  /* Rosso */
+            font-size: 24px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .marker-offerta {
+            color: #3498db;  /* Blu */
+            font-size: 24px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Stili per i cluster di marker */
+        .marker-cluster-commesse div {
+            background-color: rgba(231, 76, 60, 0.8);  /* Rosso più intenso */
+            color: white;
+            font-weight: bold;
+            border: 2px solid #c0392b;
+        }
+
+        .marker-cluster-offerte div {
+            background-color: rgba(52, 152, 219, 0.8);  /* Blu più intenso */
+            color: white;
+            font-weight: bold;
+            border: 2px solid #2980b9;
+        }
+
+        /* Stile della mappa */
+        #map {
+            height: 500px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Stili per le righe della tabella */
+        .commessa-row {
+            background-color: rgba(231, 76, 60, 0.15) !important;
+        }
+        
+        .offerta-row {
+            background-color: rgba(52, 152, 219, 0.15) !important;
+        }
+        
+        /* Stile per il popup */
+        .popup-content {
+            max-width: 300px;
+            font-size: 0.9rem;
+        }
+        
+        .popup-content h5 {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        /* Stili per le icone personalizzate */
+        .commessa-icon i {
+            filter: drop-shadow(0 0 3px #ffffff);
+        }
+        
+        .offerta-icon i {
+            filter: drop-shadow(0 0 3px #ffffff);
+        }
+        
+        /* Legenda della mappa */
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            border-radius: 50%;
+        }
+        
+        .legend-commessa {
+            background-color: #e74c3c;
+        }
+        
+        .legend-offerta {
+            background-color: #3498db;
+        }
+        
+        /* Elemento di errore */
+        #errorMessage {
+            display: none;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barra di navigazione o header (esempio) -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">Mappa Trasporti</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <span class="navbar-text me-3">
+                                Benvenuto, {{ user.first_name|default:user.username }}!
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-outline-secondary" href="{% url 'logout' %}">Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="btn btn-outline-primary me-2" href="{% url 'login' %}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary" href="{% url 'register' %}">Registrati</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Mostra messaggi di Django (es. benvenuto dopo login) -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <h1 class="mb-4">Mappa Commesse e Offerte</h1>
+        
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Ricerca nella mappa</h5>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" id="mapSearch" class="form-control" placeholder="Cerca per codice offerta o commessa...">
+                            <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('mapSearch').value=''; document.getElementById('mapSearch').dispatchEvent(new Event('input'));">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Digita il codice per filtrare i marker sulla mappa</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="map-tab" data-bs-toggle="tab" data-bs-target="#map-content" type="button" role="tab" aria-controls="map-content" aria-selected="true">Mappa</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table-content" type="button" role="tab" aria-controls="table-content" aria-selected="false">Tabella Dati</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-content" type="button" role="tab" aria-controls="upload-content" aria-selected="false">Carica Excel</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="myTabContent">
+            <!-- Tab Mappa -->
+            <div class="tab-pane fade show active" id="map-content" role="tabpanel" aria-labelledby="map-tab">
+                <div class="filter-controls">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary" id="showAll">Tutti</button>
+                        <button type="button" class="btn btn-outline-primary" id="showCommesse">Solo Commesse</button>
+                        <button type="button" class="btn btn-outline-primary" id="showOfferte">Solo Offerte</button>
+                    </div>
+                    
+                    <!-- Nuovo filtro per province -->
+                    <div class="province-filter mt-2">
+                        <select class="form-select" id="provinceFilter">
+                            <option value="all">Tutte le province</option>
+                            <!-- Le opzioni verranno popolate dinamicamente -->
+                        </select>
+                    </div>
+                </div>
+                <div id="map"></div>
+                <div class="map-legend">
+                    <div class="legend-title mb-1"><strong>Legenda</strong></div>
+                    <div class="legend-item">
+                        <div class="legend-color legend-commessa"></div>
+                        <div>Commesse</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color legend-offerta"></div>
+                        <div>Offerte</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab Tabella -->
+            <div class="tab-pane fade" id="table-content" role="tabpanel" aria-labelledby="table-tab">
+                <div class="row mb-3 mt-3">
+                    <div class="col-md-4">
+                        <select class="form-select" id="yearFilter">
+                            <option value="all">Tutti gli anni</option>
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="typeFilter">
+                            <option value="all">Commesse e Offerte</option>
+                            <option value="commesse">Solo Commesse</option>
+                            <option value="offerte">Solo Offerte</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <table id="dataTable" class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Codice</th>
+                            <th>Produttore</th>
+                            <th>Quantità</th>
+                            <th>Tipologia</th>
+                            <th>Luogo di Ritiro</th>
+                            <th>Provincia</th>
+                            <th>Data Offerta</th>
+                            <th>Anno</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- I dati verranno caricati via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Tab Caricamento Excel -->
+            <div class="tab-pane fade" id="upload-content" role="tabpanel" aria-labelledby="upload-tab">
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Carica file Excel</h5>
+                        <form id="uploadForm" method="post" action="{% url 'upload_excel' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="commesseFile" class="form-label">File Excel Commesse</label>
+                                <input class="form-control" type="file" id="commesseFile" name="commesse_file" accept=".xlsx, .xls">
+                                <small class="text-muted">Carica il file Excel contenente le commesse con "DA FARE" nella colonna DATA RITIRO</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="offerteFile" class="form-label">File Excel Offerte</label>
+                                <input class="form-control" type="file" id="offerteFile" name="offerte_file" accept=".xlsx, .xls">
+                                <small class="text-muted">Carica il file Excel contenente le offerte con "DA FARE" nella colonna DATA OFFERTA</small>
+                            </div>
+                            
+                            <p class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> Attenzione: il caricamento di nuovi file eliminerà tutti i dati esistenti.
+                            </p>
+                            
+                            <button type="submit" class="btn btn-primary">Carica</button>
+                        </form>
+                    </div>
+                </div>
+                {% if messages %}
+                <div class="mt-3">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+  
+</body>
+</html>

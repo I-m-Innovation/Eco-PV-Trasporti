@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Utente</title>
+    <!-- Link a un file CSS per il login (simile a register.css) -->
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Accedi al tuo account</h2>
+
+        <!-- Mostra i messaggi di Django (successo, errore, ecc.) -->
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- Mostra errori specifici del form (es. credenziali errate) -->
+        {% if form.non_field_errors %}
+            <div class="form-errors non-field-errors">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p> <!-- AuthenticationForm mette qui l'errore generico -->
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Inizio del form -->
+        <form method="post" action="{% url 'login' %}" id="login-form" novalidate>
+            {% csrf_token %}
+
+            <!-- Itera sui campi del form (Email, Password) -->
+            {% for field in form %}
+                <div class="form-group">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    <!-- Mostra errori specifici del campo (meno comuni per il login) -->
+                    {% if field.errors %}
+                        <div class="field-errors">
+                            {% for error in field.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit">Accedi</button>
+        </form>
+
+        <p class="register-link">
+            Non hai un account? <a href="{% url 'request_token' %}">Registrati</a>
+        </p>
+        <!-- Aggiungi link per recupero password se lo implementerai -->
+        <!-- <p class="password-reset-link">
+            <a href="#">Password dimenticata?</a>
+        </p> -->
+    </div>
+
+    <!-- Link opzionale a un file JavaScript per il login -->
+    <!-- <script src="{% static 'login.js' %}"></script> -->
+</body>
+</html>

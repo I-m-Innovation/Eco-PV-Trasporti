@@ -1,0 +1,82 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione Utente</title>
+    <!-- Link al file CSS (lo creeremo tra poco) -->
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+</head>
+<body>
+
+    <div class="register-container">
+        <h2>Crea un nuovo account</h2>
+        <p>Inserisci i tuoi dati e il token di registrazione che hai ricevuto.</p>
+
+        <!-- Mostra i messaggi di Django (successo, errore, ecc.) -->
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- Inizio del form -->
+        <!-- method="post" indica che i dati verranno inviati con una richiesta POST -->
+        <!-- action="{% url 'register' %}" significa che i dati verranno inviati all'URL di registrazione -->
+        <form method="post" action="{% url 'register' %}" id="register-form" novalidate>
+            <!-- Token CSRF: Protezione fondamentale contro attacchi Cross-Site Request Forgery -->
+            {% csrf_token %}
+
+            <!-- Mostra gli errori generali del form (non legati a un campo specifico) -->
+            {% if form.non_field_errors %}
+                <div class="form-errors non-field-errors">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Itera sui campi del form definiti in RegisterForm -->
+            {% for field in form %}
+                <div class="form-group">
+                    <!-- Etichetta del campo (Nome, Cognome, Email, Password, Conferma Password) -->
+                    {{ field.label_tag }}
+
+                    <!-- Il campo input effettivo -->
+                    {{ field }}
+
+                    <!-- Mostra eventuali errori di validazione per questo specifico campo -->
+                    {% if field.errors %}
+                        <div class="field-errors">
+                            {% for error in field.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Mostra il testo di aiuto (es. requisiti password) se presente -->
+                    {% if field.help_text %}
+                        <small class="help-text">{{ field.help_text|safe }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <!-- Pulsante per inviare il form -->
+            <button type="submit">Registrati</button>
+        </form>
+
+        <p class="login-link">
+            Hai già un account? <a href="{% url 'login' %}">Accedi</a> <!-- Modifica # con l'URL di login -->
+        </p>
+        <p style="margin-top: 10px;">
+            Non hai un token? <a href="{% url 'request_token' %}">Richiedi accesso</a>
+        </p>
+    </div>
+
+    <!-- Link al file JavaScript (lo creeremo tra poco) -->
+    <!-- <script src="{% static 'register.js' %}"></script> -->
+</body>
+</html>
