@@ -226,6 +226,7 @@ def upload_excel(request):
             # Processa i file
             commesse_file = request.FILES.get('commesse_file')
             offerte_file = request.FILES.get('offerte_file')
+            print(offerte_file)
             
             commesse_imported = 0
             offerte_imported = 0
