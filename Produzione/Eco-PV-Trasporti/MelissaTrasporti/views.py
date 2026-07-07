@@ -4,6 +4,7 @@ from django.core import serializers
 
 from dal import autocomplete
 
+from MelissaTrasporti.geo import trova_comune
 from MelissaTrasporti.models import Fornitore, Commessa, Comune, OffertaCommessa
 
 import folium
@@ -12,6 +13,25 @@ import geopy as geo
 
 from geopy.geocoders import Nominatim
 geolocator = Nominatim(user_agent="melissa_trasporti_inc")
+
+
+def applica_geolocalizzazione(record, localita=None, provincia=None):
+    if record.get('latitudine') and record.get('longitudine'):
+        return record
+
+    localita = localita or record.get('localita') or record.get('luogo_ritiro') or record.get('paese__name')
+    provincia = provincia or record.get('provincia') or record.get('paese__provincia')
+    comune = trova_comune(localita, provincia)
+    if not comune:
+        return record
+
+    record['latitudine'] = comune.latitudine
+    record['longitudine'] = comune.longitudine
+    record['paese__latitudine'] = comune.latitudine
+    record['paese__longitudine'] = comune.longitudine
+    record['paese__name'] = comune.name
+    record['paese__provincia'] = comune.provincia
+    return record
 
 
 class ComuneAutocomplete(autocomplete.Select2QuerySetView):
@@ -58,6 +78,8 @@ def home(request):
         'paese__name',
         'paese__provincia',
     ))
+    commesse = [applica_geolocalizzazione(commessa) for commessa in commesse]
+    offerte = [applica_geolocalizzazione(offerta) for offerta in offerte]
 
     context = {
         'fornitori_list': fornitori,
