@@ -11,6 +11,7 @@ urlpatterns = [
     path('login/', views.AppLoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('carica-excel/', views.carica_excel, name='carica_excel'),
+    path('index/', views.home, name='index'),
     path('', views.home, name='home'),
     re_path(
         r'^comune-autocomplete/$',
