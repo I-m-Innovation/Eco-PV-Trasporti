@@ -1,14 +1,13 @@
 {% load static %}
 <!doctype html>
-<html lang="en">
+<html lang="it">
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport"
-	      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 
 	<!-- JQUERY LIBRARY -->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
 
 	<!-- DATATABLE LIBRARY -->
 	<link href="{% static 'DataTables/datatables.min.css' %}" rel="stylesheet">
@@ -31,18 +30,28 @@
 	<!-- FONT-AWESOME -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
+	<!-- APP FONT -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+	<!-- GSAP -->
+	<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+
 	<link rel="stylesheet" href="{% static 'MelissaTrasporti/style.css' %}">
 
 	{% block scripts %}{% endblock %}
 
 	<title>{% block title %}{% endblock %}</title>
 </head>
-<body style="height: 100vh">
-	<header style="height: 5%">
+<body class="app-shell">
+	<header class="app-header">
 		{% include 'partials/navbar.html' %}
 	</header> 
 	
 	{% block content %}
 	{% endblock %}
+
+	<script src="{% static 'MelissaTrasporti/ui.js' %}" defer></script>
 </body>
 </html>

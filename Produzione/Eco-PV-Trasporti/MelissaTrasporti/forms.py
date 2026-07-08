@@ -5,6 +5,13 @@ from dal import autocomplete
 from .models import Fornitore, OffertaCommessa, Commessa
 
 
+class ExcelUploadForm(forms.Form):
+    file = forms.FileField(
+        label='File Excel o CSV',
+        help_text='Carica un file .xlsx, .xls o .csv con i dati delle offerte/commesse.'
+    )
+
+
 class FornitoreForm(forms.ModelForm):
     class Meta:
         model = Fornitore

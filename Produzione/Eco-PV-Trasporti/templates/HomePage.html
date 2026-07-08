@@ -4,7 +4,7 @@
 {% block scripts %}
 	<link rel="stylesheet" href="{% static 'MelissaTrasporti/leaflet-icons/leaflet.awesome-markers.css' %}">
 	<script src="{% static 'MelissaTrasporti/leaflet-icons/leaflet.awesome-markers.js' %}"></script>
-	
+
 	<!-- MARKER CLUSTERS -->
 	<link rel="stylesheet" href="{% static 'MelissaTrasporti/Leaflet.markercluster-1.4.1/dist/MarkerCluster.css' %}" />
 	<link rel="stylesheet" href="{% static 'MelissaTrasporti/Leaflet.markercluster-1.4.1/dist/MarkerCluster.Default.css' %}"/>
@@ -12,222 +12,686 @@
 {% endblock %}
 
 {% block content %}
-	<main style="height: 95%">
-	<div class="container-fluid px-5 h-100">
-		<div class="row gx-5 h-100">
-			<div class="col-6 h-100">
-				<div class="row py-5" style="height: 100%">
-					<div class="col">
-						<div id="map" style="height: 95%; border-radius: 5px; border: 1px solid lightgrey"></div>
-						<span>&nbsp;</span>
-					  <span style="margin-right: 10px"><i class="fa fa-truck" aria-hidden="true"></i>&nbsp;Trasportatori</span>
-					  <span style="margin-right: 10px"><i class="fa fa-recycle" aria-hidden="true"></i>&nbsp;Centri di smaltimento</span>
-						<span style="margin-right: 10px"><i class="fa fa-refresh" aria-hidden="true"></i>&nbsp;Fornitori completi</span>
-						<span style="margin-right: 10px"><i class="fa fa-circle" aria-hidden="true" style="color:#d43f2c"></i>&nbsp;Commesse </span>
-						<span style="margin-right: 10px"><i class="fa fa-circle" aria-hidden="true" style="color:#d052b8"></i>&nbsp;Commesse "ANTE"</span>
-						<span style="margin-right: 10px"><i class="fa fa-circle" aria-hidden="true" style="color: lightgrey"></i>&nbsp;Offerte</span>
+	<main class="dashboard-page-light">
+	<div class="container-fluid px-5 h-100 dashboard-container">
+		<section class="dashboard-tools" data-ui-panel>
+			<div class="toolbar-card">
+				<div class="toolbar-grid">
+					<div class="search-panel">
+						<h4 class="search-title">Ricerca nella mappa</h4>
+						<div class="map-search-row">
+							<span class="search-icon" aria-hidden="true"><i class="fa fa-search"></i></span>
+							<input id="map-search" class="map-search-input" type="search" placeholder="Cerca per codice offerta o commessa..." autocomplete="off">
+							<button id="map-search-clear" class="search-clear-button" type="button" aria-label="Cancella ricerca">
+								<i class="fa fa-times-circle-o" aria-hidden="true"></i>
+							</button>
+						</div>
+					</div>
+
+					<div id="excel-upload-panel" class="upload-inline-panel">
+						<div>
+							<span class="section-label">Import dati</span>
+							<h4 class="upload-inline-title">Carica Excel</h4>
+							<p class="upload-help">Colonne richieste: codice, produttore, quantita, tipologia. Opzionali: garanzia, note, localita, provincia, latitudine, longitudine, is_commessa, is_done.</p>
+						</div>
+
+						{% if messages %}
+							<div class="upload-messages">
+								{% for message in messages %}
+									<div class="upload-message upload-message-{{ message.tags }}">{{ message }}</div>
+								{% endfor %}
+							</div>
+						{% endif %}
+
+						<form action="{% url 'carica_excel' %}" method="post" enctype="multipart/form-data" class="upload-inline-form">
+							{% csrf_token %}
+							<label for="{{ upload_form.file.id_for_label }}">File Excel o CSV</label>
+							{{ upload_form.file }}
+							<button type="submit" class="upload-submit">Importa</button>
+						</form>
 					</div>
 				</div>
 			</div>
-			<div class="col-6">
-				<div class="row py-5">
-					<span style="font-weight: bold">Links</span><br>
-					<span><i class="fa fa-external-link" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/">Gestione commesse e fornitori</a></span>
-					<span><i class="fa fa-plus-square-o" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/offertacommessa/add/">Aggiungi nuova offerta/commessa</a></span>
-					<span><i class="fa fa-user-plus" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/fornitore/add/">Aggiungi nuovo fornitore</a></span>
-					<span><i class="fa fa-list-ul" aria-hidden="true"></i> <a style="color: #3e246c" href="{% url 'admin:index' %}MelissaTrasporti/commessa/">Visualizza lista commesse</a></span>
-					<p></p><hr>
-					<h4 style="font-weight: bold"> Lista commesse prese in carico</h4>
-					<table id="table-commesse" class="table table-striped compact" style="width: 100%">
-						<thead>
-						<tr style="text-align: center">
-							<th>Codice</th>
-							<th>Produttore</th>
-							<th>Garanzia</th>
-							<th>Tipologia</th>
-							<th>Quantita</th>
-							<th>Località</th>
-							<th style="text-align: center">Posizione</th>
-						</tr>
-						</thead>
-					</table>
-				</div>
+		</section>
+
+		<div class="row gx-4 h-100 dashboard-row">
+			<div class="col-12 col-lg-6 h-100 map-column" data-ui-panel>
+				<section class="map-panel">
+					<div class="map-panel-header">
+						<div>
+							<span class="section-label">Mappa</span>
+							<h4 class="map-panel-title">Commesse e offerte</h4>
+						</div>
+						<label class="map-province-filter" for="map-province-filter">
+							<select id="map-province-filter" class="map-province-select" aria-label="Filtra per provincia">
+								<option value="">Tutte le province</option>
+							</select>
+						</label>
+						<div class="map-filter-group" aria-label="Filtro marker">
+							<button class="map-filter-button active" type="button" data-map-filter="all">Tutti</button>
+							<button class="map-filter-button" type="button" data-map-filter="commesse">Solo Commesse</button>
+							<button class="map-filter-button" type="button" data-map-filter="offerte">Solo Offerte</button>
+						</div>
+					</div>
+					<div id="map" class="map-canvas-light"></div>
+					<div class="map-legend-light" aria-label="Legenda mappa">
+						<span class="legend-item"><i class="fa fa-truck legend-transport" aria-hidden="true"></i>Trasportatori</span>
+						<span class="legend-item"><i class="fa fa-recycle legend-treatment" aria-hidden="true"></i>Centri di smaltimento</span>
+						<span class="legend-item"><i class="fa fa-refresh legend-complete" aria-hidden="true"></i>Fornitori completi</span>
+						<span class="legend-item"><i class="fa fa-circle legend-red" aria-hidden="true"></i>Commesse</span>
+						<span class="legend-item"><i class="fa fa-circle legend-purple" aria-hidden="true"></i>Commesse ANTE</span>
+						<span class="legend-item"><i class="fa fa-circle legend-grey" aria-hidden="true"></i>Offerte</span>
+					</div>
+				</section>
+			</div>
+
+			<div class="col-12 col-lg-6 side-column" data-ui-panel>
+				<section class="operations-panel">
+					<div class="operations-header">
+						<div>
+							<span class="section-label">Operativit&agrave;</span>
+							<h4 class="table-title">Tabella dati</h4>
+						</div>
+					</div>
+
+					<div class="data-filter-bar" aria-label="Filtri tabella dati">
+						<label class="data-filter-field" for="table-year-filter">
+							<span>Anno</span>
+							<select id="table-year-filter" class="data-filter-select">
+								<option value="">Tutti gli anni</option>
+							</select>
+						</label>
+						<label class="data-filter-field" for="table-type-filter">
+							<span>Tipo</span>
+							<select id="table-type-filter" class="data-filter-select">
+								<option value="">Commesse e Offerte</option>
+								<option value="commesse">Solo Commesse</option>
+								<option value="offerte">Solo Offerte</option>
+								<option value="in_carico">Commesse in carico</option>
+								<option value="evase">Commesse evase</option>
+							</select>
+						</label>
+						<label class="data-filter-field" for="table-search">
+							<span>Cerca</span>
+							<input id="table-search" class="data-filter-input" type="search" placeholder="Codice, produttore, localit&agrave;..." autocomplete="off">
+						</label>
+					</div>
+
+					<div class="table-shell">
+						<table id="table-commesse" class="table table-hover table-sm compact dashboard-table records-table">
+							<thead>
+							<tr>
+								<th>Tipo</th>
+								<th>Codice</th>
+								<th>Produttore</th>
+								<th>Quantit&agrave;</th>
+								<th>Tipologia</th>
+								<th>Localit&agrave;</th>
+								<th>Prov.</th>
+								<th>Stato</th>
+								<th>Posizione</th>
+							</tr>
+							</thead>
+						</table>
+					</div>
+				</section>
 			</div>
 		</div>
 	</div>
 	</main>
-	
+
 	{{ fornitori_list|json_script:"fornitori_json" }}
 
 	{{ commesse_list|json_script:"commesse_json" }}
-	
+
 	{{ offerte_list|json_script:"offerte_json" }}
+
+	{{ dati_tabella_list|json_script:"dati_tabella_json" }}
 
 	<script>
 			$(document).ready(function(){
 					let fornitori = JSON.parse(document.getElementById('fornitori_json').textContent);
 					let commesse = JSON.parse(document.getElementById('commesse_json').textContent);
-					commesse.forEach(commessa => {
-							commessa.paese__name = commessa.paese__name + ', ' + commessa.paese__provincia
-					});
-					console.log(commesse);
 					let offerte = JSON.parse(document.getElementById('offerte_json').textContent);
-					let icona = {};
-					let colore = {};
-                    
+					let datiTabella = JSON.parse(document.getElementById('dati_tabella_json').textContent);
+
+					function escapeHtml(value) {
+							return String(value).replace(/[&<>"']/g, function (char) {
+									return {
+											'&': '&amp;',
+											'<': '&lt;',
+											'>': '&gt;',
+											'"': '&quot;',
+											"'": '&#039;'
+									}[char];
+							});
+					}
+
+					function isEmptyDisplayValue(value) {
+							return value === null || value === undefined || value === '' || String(value).toLowerCase() === 'nan';
+					}
+
+					function displayValue(value) {
+							if (isEmptyDisplayValue(value)) {
+									return '-';
+							}
+							return escapeHtml(value);
+					}
+
+					function booleanValue(value) {
+							return value ? 'Si' : 'No';
+					}
+
+					function normalizeProvince(value) {
+							return isEmptyDisplayValue(value) ? '' : String(value).trim().toUpperCase();
+					}
+
+					function localitaLabel(record) {
+							return isEmptyDisplayValue(record.paese__name) ? '' : record.paese__name;
+					}
+
+					fornitori.forEach(fornitore => {
+							fornitore.localita_label = [fornitore.paese__name, fornitore.paese__provincia, fornitore.paese__cap].filter(Boolean).join(', ');
+							if (!fornitore.latitudine) {
+									fornitore.latitudine = fornitore.paese__latitudine;
+									fornitore.longitudine = fornitore.paese__longitudine;
+							}
+					});
+
 					commesse.forEach(commessa => {
+							commessa.paese__name = [commessa.paese__name, commessa.paese__provincia].filter(Boolean).join(', ');
 							if (!commessa.latitudine) {
 									commessa.latitudine = commessa.paese__latitudine;
 									commessa.longitudine = commessa.paese__longitudine;
 							}
-					})
-					
+					});
+
 					offerte.forEach(offerta => {
+							offerta.paese__name = [offerta.paese__name, offerta.paese__provincia].filter(Boolean).join(', ');
 							if (!offerta.latitudine) {
 									offerta.latitudine = offerta.paese__latitudine;
 									offerta.longitudine = offerta.paese__longitudine;
 							}
-					})
-					
-					var tabella = $("#table-commesse")
-							
-					tabella.DataTable ({
-							ordering: false,
+					});
+
+					datiTabella.forEach(record => {
+							record.localita_label = localitaLabel(record);
+							if (!record.latitudine) {
+									record.latitudine = record.paese__latitudine;
+									record.longitudine = record.paese__longitudine;
+							}
+					});
+
+					var tabella = $("#table-commesse");
+					let mapReady = false;
+					const mapDetailZoom = 15;
+					const pageLengthOptions = Array.from({length: 91}, function (_, index) {
+							return index + 10;
+					});
+
+					const commesseDataTable = tabella.DataTable ({
+							ordering: true,
+							autoWidth: false,
+							lengthChange: false,
+							pageLength: 10,
 							language: {
 									decimal: '',
 									"emptyTable": "Nessun dato disponibile",
 									"info": "Da _START_ a _END_ di _TOTAL_ righe",
-									"infoEmpty": "Da 0 a 0 di 0 entries",
-									"infoFiltered": "(filtered from _MAX_ total entries)", 
+									"infoEmpty": "Da 0 a 0 di 0 righe",
+									"infoFiltered": "(filtrate da _MAX_ righe totali)",
 									"infoPostFix": "",
 									"thousands": ".",
-									"lengthMenu":     "Mostra _MENU_ righe",
-									"processing":     "",
-									"search":         "Cerca: ",
-									"zeroRecords":    "Nessun risutlato trovato",
+									"processing": "",
+									"search": "Cerca:",
+									"zeroRecords": "Nessun risultato trovato",
 									"paginate": {
-											"first":      "Prima scheda",
-											"last":       "Ultima scheda",
-											"next":       "Prossima",
-											"previous":   "Precedente"
+											"first": "Prima",
+											"last": "Ultima",
+											"next": "Successiva",
+											"previous": "Precedente"
 									},
 							},
-							"data" : commesse, 
+							"data" : datiTabella,
 							"columns" : [
-									{ "data" : "codice" }, 
+									{ "data" : "tipo_record" },
+									{ "data" : "codice" },
 									{ "data" : "produttore" },
-									{ "data" : "garanzia_fin" }, 
-									{ "data" : "tipologia" }, 
 									{ "data" : "quantita" },
-									{ "data" : "paese__name" },
-									{ // DEFINISCO LA COLONNA PER LE POSIZIONI
-											className: 'details-control', 
-											orderable: false, 
-											data: null, 
+									{ "data" : "tipologia" },
+									{ "data" : "localita_label" },
+									{ "data" : "paese__provincia" },
+									{ "data" : "stato_record" },
+									{
+											className: 'details-control',
+											orderable: false,
+											data: null,
 											defaultContent: '-'
 									},
 							],
-							columnDefs: [ 
-                  {target: 6, // DEFINISCO LA COLONNA CON LE POSIZIONI
-		                  render: function ( data, type, row, meta ) {
-				                  if (row.latitudine && row.longitudine) {
-						                  pos = `[${row.latitudine},${row.longitudine}]`
-						                  return '<a href="" class="marker" value="'+pos+'">Vedi</a>'
-				                  }
-				                  else {
-						                  pos = `[${row.paese__latitudine},${row.paese__longitudine}]`
-						                  return '<a href="" class="marker" value="'+pos+'">Vedi</a>'
-				                  }
-		                  }
-                  }, {target: [1,2,3,4,5,6], className: 'text-center'}
-							]
+							columnDefs: [
+									{
+											target: [0, 1, 2, 4, 5, 6, 7],
+											render: function ( data, type, row, meta ) {
+													if (type === 'display') {
+															return displayValue(data);
+													}
+													return data || '';
+											}
+									},
+									{
+											target: 3,
+											render: function ( data, type, row, meta ) {
+													if (type === 'display') {
+															return displayValue(data);
+													}
+													return data || 0;
+											}
+									},
+									{
+											target: 8,
+											render: function ( data, type, row, meta ) {
+													let lat = parseFloat(row.latitudine || row.paese__latitudine);
+													let lng = parseFloat(row.longitudine || row.paese__longitudine);
+
+													if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+															let pos = JSON.stringify([lat, lng]);
+															let kind = row.is_commessa ? 'commessa' : 'offerta';
+															return '<a href="" class="marker table-marker-link" data-record-id="' + row.id + '" data-record-kind="' + kind + '" data-position=\'' + pos + '\'>Vedi</a>';
+													}
+
+													return '-';
+											}
+									},
+									{target: [2,4,5], className: 'text-start'},
+									{target: [0,1,3,6,7,8], className: 'text-center'}
+							],
+							initComplete: function () {
+									const api = this.api();
+									window.setTimeout(function () {
+											fitTableRows(api);
+									}, 0);
+							}
 					});
-					
+
+					const tableYearFilter = $('#table-year-filter');
+					const tableTypeFilter = $('#table-type-filter');
+					const tableSearchInput = $('#table-search');
+					const anniTabella = Array.from(new Set(datiTabella.map(record => record.anno_record).filter(Boolean))).sort();
+
+					anniTabella.forEach(function (anno) {
+							tableYearFilter.append('<option value="' + anno + '">' + anno + '</option>');
+					});
+
+					$.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+							if (settings.nTable.id !== 'table-commesse') {
+									return true;
+							}
+
+							const record = commesseDataTable.row(dataIndex).data();
+							const anno = tableYearFilter.val();
+							const tipo = tableTypeFilter.val();
+
+							if (anno && String(record.anno_record) !== anno) {
+									return false;
+							}
+
+							if (tipo === 'commesse' && !record.is_commessa) {
+									return false;
+							}
+							if (tipo === 'offerte' && record.is_commessa) {
+									return false;
+							}
+							if (tipo === 'in_carico' && (!record.is_commessa || record.is_done)) {
+									return false;
+							}
+							if (tipo === 'evase' && (!record.is_commessa || !record.is_done)) {
+									return false;
+							}
+
+							return true;
+					});
+
+					tableYearFilter.add(tableTypeFilter).on('change', function () {
+							commesseDataTable.draw();
+							window.setTimeout(function () {
+									fitTableRows(commesseDataTable);
+							}, 0);
+					});
+
+					let tableSearchTimer;
+					tableSearchInput.on('input', function () {
+							window.clearTimeout(tableSearchTimer);
+							const searchValue = this.value;
+							tableSearchTimer = window.setTimeout(function () {
+									commesseDataTable.search(searchValue).draw();
+									window.setTimeout(function () {
+											fitTableRows(commesseDataTable);
+									}, 0);
+							}, 80);
+					});
+
+					function fitTableRows(dataTable) {
+							const shell = document.querySelector('.table-shell');
+							if (!shell) {
+									return;
+							}
+
+							const tableArea = shell.querySelector('.dt-layout-table') || shell;
+							const tableElement = tableArea.querySelector('table') || shell.querySelector('table');
+							const tableRows = Array.from(shell.querySelectorAll('tbody tr')).filter(function (row) {
+									return !row.querySelector('.dt-empty');
+							});
+							const filteredRows = dataTable.rows({filter: 'applied'}).count();
+							const maxRows = pageLengthOptions[pageLengthOptions.length - 1];
+
+							if (!filteredRows || !tableElement) {
+									return;
+							}
+
+							const rowHeights = tableRows.map(function (row) {
+									return row.getBoundingClientRect().height;
+							}).filter(Boolean);
+							const rowHeight = rowHeights.length
+									? Math.max(22, rowHeights.reduce(function (total, height) { return total + height; }, 0) / rowHeights.length)
+									: 28;
+							const currentRows = dataTable.page.len();
+							const tableGap = tableArea.clientHeight - tableElement.getBoundingClientRect().height - 2;
+							let targetRows = currentRows;
+
+							if (tableGap > rowHeight * 0.8) {
+									targetRows += Math.max(1, Math.floor(tableGap / rowHeight));
+							} else if (tableGap < rowHeight * -0.8) {
+									targetRows -= Math.max(1, Math.ceil(Math.abs(tableGap) / rowHeight));
+							}
+
+							targetRows = Math.max(1, Math.min(maxRows, filteredRows, targetRows));
+
+							if (dataTable.page.len() !== targetRows) {
+									dataTable.page.len(targetRows).draw(false);
+									window.setTimeout(function () {
+											fitTableRows(dataTable);
+									}, 0);
+							}
+					}
+
+					let fitTableRowsTimer;
+					$(window).on('resize', function () {
+							window.clearTimeout(fitTableRowsTimer);
+							fitTableRowsTimer = window.setTimeout(function () {
+									fitTableRows(commesseDataTable);
+							}, 120);
+					});
+
+					const mapProvinceFilter = $('#map-province-filter');
+					const provinceMappa = Array.from(new Set(
+							commesse.concat(offerte)
+									.map(record => normalizeProvince(record.paese__provincia))
+									.filter(Boolean)
+					)).sort();
+
+					provinceMappa.forEach(function (provincia) {
+							mapProvinceFilter.append('<option value="' + escapeHtml(provincia) + '">' + escapeHtml(provincia) + '</option>');
+					});
+
+					$('#map-search').on('input', function () {
+							if (mapReady) {
+									applyMapFilters();
+							}
+					});
+					$('#map-search-clear').on('click', function () {
+							$('#map-search').val('').trigger('input').trigger('focus');
+					});
+					$('.map-filter-button').on('click', function () {
+							$('.map-filter-button').removeClass('active');
+							$(this).addClass('active');
+							if (mapReady) {
+									applyMapFilters();
+							}
+					});
+					mapProvinceFilter.on('change', function () {
+							if (mapReady) {
+									applyMapFilters();
+									if (!normalizeProvince(this.value)) {
+											resetProvinceView();
+									}
+							}
+					});
+
+					if (!window.L) {
+							return;
+					}
+
+					function popupDetail(title, rows) {
+							const detailRows = rows.map(function (row) {
+									return `<p><strong>${escapeHtml(row[0])}:</strong> ${displayValue(row[1])}</p>`;
+							}).join('');
+
+							return `<div class="map-popup-detail"><h5>${escapeHtml(title)}</h5>${detailRows}</div>`;
+					}
+
 					const baseLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 							maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 					});
-					
+
 					const layerTrasporto = L.layerGroup();
 					const layerTrattamento =  L.layerGroup();
 					const layerCompleti =  L.layerGroup();
 					const layerOfferte = L.layerGroup();
 					const layerCommesse = L.layerGroup();
-					
+					const commessaMarkers = [];
+					const offertaMarkers = [];
+
 					fornitori.forEach(fornitore => {
-							let url = "{% url 'admin:index' %}MelissaTrasporti/fornitore/"+fornitore.id+"/";
-							let html = `<p style="margin: 5px 0">Fornitore: ${fornitore.ragione_sociale}</p>`+
-									`<p style="margin: 5px 0">Indirizzo: ${fornitore.indirizzo}</p>`+
-									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettagli fornitore</a></p>`
-              if (fornitore.trasporto && fornitore.trattamento) {
-                  L.marker([fornitore.latitudine, fornitore.longitudine], 
-                      {icon: L.AwesomeMarkers.icon({icon: 'refresh', markerColor: 'orange', prefix: 'fa'})
-                      }
-                  ).bindPopup(html).addTo(layerCompleti)
-              } 
-              else if (fornitore.trasporto){
-                  L.marker([fornitore.latitudine, fornitore.longitudine], 
-                      {icon: L.AwesomeMarkers.icon({icon: 'truck', markerColor: 'darkblue', prefix: 'fa'})
-                      }
-                  ).bindPopup(html).addTo(layerTrasporto)
-              } 
-              else if (fornitore.trattamento){
-                  L.marker([fornitore.latitudine, fornitore.longitudine], 
-                      {icon: L.AwesomeMarkers.icon({icon: 'recycle', markerColor: 'darkgreen', prefix: 'fa'})
-                      }
-                  ).bindPopup(html).addTo(layerTrattamento)
-              }
-          });
-					
+							if (!fornitore.latitudine || !fornitore.longitudine) {
+									return;
+							}
+
+							let html = popupDetail('Dettaglio fornitore', [
+									['ID', fornitore.id],
+									['Ragione sociale', fornitore.ragione_sociale],
+									['Indirizzo', fornitore.indirizzo],
+									['Trasporto', booleanValue(fornitore.trasporto)],
+									['Trattamento', booleanValue(fornitore.trattamento)],
+									['Localita', fornitore.localita_label],
+									['Latitudine', fornitore.latitudine],
+									['Longitudine', fornitore.longitudine],
+							]);
+							if (fornitore.trasporto && fornitore.trattamento) {
+									L.marker([fornitore.latitudine, fornitore.longitudine],
+											{icon: L.AwesomeMarkers.icon({icon: 'refresh', markerColor: 'orange', prefix: 'fa'})
+											}
+									).bindPopup(html).addTo(layerCompleti);
+							}
+							else if (fornitore.trasporto){
+									L.marker([fornitore.latitudine, fornitore.longitudine],
+											{icon: L.AwesomeMarkers.icon({icon: 'truck', markerColor: 'darkblue', prefix: 'fa'})
+											}
+									).bindPopup(html).addTo(layerTrasporto);
+							}
+							else if (fornitore.trattamento){
+									L.marker([fornitore.latitudine, fornitore.longitudine],
+											{icon: L.AwesomeMarkers.icon({icon: 'recycle', markerColor: 'darkgreen', prefix: 'fa'})
+											}
+									).bindPopup(html).addTo(layerTrattamento);
+							}
+					});
+
+					const initialMapCenter = [41.902782, 12.496366];
+					const initialMapZoom = 6;
 					var map = L.map('map',{
-							center: [41.902782, 12.496366], 
-							zoom: 6,
+							center: initialMapCenter,
+							zoom: initialMapZoom,
 							layers: [baseLayer, layerTrasporto]
 					});
-                    
-					const layerControl = L.control.layers({'OpenStreetMap': baseLayer}, {'Trasporto': layerTrasporto, 'Commesse': layerCommesse, 'Offerte': layerOfferte}).addTo(map);
-          layerControl.addOverlay(layerTrattamento, 'Trattamento');
-          layerControl.addOverlay(layerCompleti, 'Trasporto & Trattamento');
-                    
-					commesse.forEach(commessa => {
-							let url = "{% url 'admin:index' %}MelissaTrasporti/commessa/"+commessa.id+"/";
-							let html = `<p style="margin: 5px 0">Commessa: ${commessa.codice}</p>`+
-									`<p style="margin: 5px 0">Quantità: ${commessa.quantita}</p>`+
-									`<p style="margin: 5px 0">Tipologia: ${commessa.tipologia}</p>`+
-									`<p style="margin: 5px 0">Produttore: ${commessa.produttore}</p>`+
-									`<p style="margin: 5px 0">note: ${commessa.note}</p>`+
-									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettagli commessa</a></p>`
-							
-							let comm_color = 'red'
-							if (commessa.garanzia_fin==='ANTE') {comm_color = 'purple'}
-							L.marker([commessa.latitudine, commessa.longitudine],
-									{icon: L.AwesomeMarkers.icon({icon: 'circle-o', markerColor: comm_color, prefix: 'fa'})}
-							).bindPopup(html).addTo(layerCommesse)
-					});
-                    
-					offerte.forEach(offerta => {
-							let url = "{% url 'admin:index' %}MelissaTrasporti/offertacommessa/"+offerta.id+"/";
-							let html = `<p style="margin: 5px 0">Offerta: ${offerta.codice}</p>`+
-									`<p style="margin: 5px 0">Quantità: ${offerta.quantita}</p>`+
-									`<p style="margin: 5px 0">Tipologia: ${offerta.tipologia}</p>`+
-									`<p style="margin: 5px 0">Produttore: ${offerta.produttore}</p>`+
-									`<p style="margin: 5px 0">note: ${offerta.note}</p>`+
-									`<p style="margin: 5px 0">Vedi: <a href="${url}">dettagli offerta</a></p>`
 
-							L.marker([offerta.latitudine, offerta.longitudine],
+					const layerControl = L.control.layers({'OpenStreetMap': baseLayer}, {'Trasporto': layerTrasporto, 'Commesse': layerCommesse, 'Offerte': layerOfferte}).addTo(map);
+					layerControl.addOverlay(layerTrattamento, 'Trattamento');
+					layerControl.addOverlay(layerCompleti, 'Trasporto & Trattamento');
+
+					commesse.forEach(commessa => {
+							if (!commessa.latitudine || !commessa.longitudine) {
+									return;
+							}
+
+							let html = popupDetail('Dettaglio commessa', [
+									['ID', commessa.id],
+									['Codice', commessa.codice],
+									['Produttore', commessa.produttore],
+									['Garanzia', commessa.garanzia_fin],
+									['Tipologia', commessa.tipologia],
+									['Quantita', commessa.quantita],
+									['Localita', commessa.paese__name],
+									['Provincia', commessa.paese__provincia],
+									['Latitudine', commessa.latitudine || commessa.paese__latitudine],
+									['Longitudine', commessa.longitudine || commessa.paese__longitudine],
+									['Note', commessa.note],
+							]);
+
+							let comm_color = 'red';
+							if (commessa.garanzia_fin==='ANTE') {comm_color = 'purple';}
+							const marker = L.marker([commessa.latitudine, commessa.longitudine],
+									{icon: L.AwesomeMarkers.icon({icon: 'circle-o', markerColor: comm_color, prefix: 'fa'})}
+							).bindPopup(html).addTo(layerCommesse);
+							commessaMarkers.push({id: String(commessa.id), marker: marker, layer: layerCommesse, codice: String(commessa.codice || '').toLowerCase(), provincia: normalizeProvince(commessa.paese__provincia)});
+					});
+
+					offerte.forEach(offerta => {
+							if (!offerta.latitudine || !offerta.longitudine) {
+									return;
+							}
+
+							let html = popupDetail('Dettaglio offerta', [
+									['ID', offerta.id],
+									['Codice', offerta.codice],
+									['Produttore', offerta.produttore],
+									['Garanzia', offerta.garanzia_fin],
+									['Tipologia', offerta.tipologia],
+									['Quantita', offerta.quantita],
+									['Localita', offerta.paese__name],
+									['Provincia', offerta.paese__provincia],
+									['Latitudine', offerta.latitudine || offerta.paese__latitudine],
+									['Longitudine', offerta.longitudine || offerta.paese__longitudine],
+									['Note', offerta.note],
+							]);
+
+							const marker = L.marker([offerta.latitudine, offerta.longitudine],
 									{icon: L.AwesomeMarkers.icon({icon: 'circle-o', markerColor: 'lightgray', prefix: 'fa'})
 									}
-							).bindPopup(html).addTo(layerOfferte)
+							).bindPopup(html).addTo(layerOfferte);
+							offertaMarkers.push({id: String(offerta.id), marker: marker, layer: layerOfferte, codice: String(offerta.codice || '').toLowerCase(), provincia: normalizeProvince(offerta.paese__provincia)});
 					});
-                    
+
 					const cluster_layer = new L.MarkerClusterGroup().addTo(map);
 					cluster_layer.addLayers([layerOfferte, layerCommesse]);
-					
-          
-					$('#table-commesse tbody').on('click', 'td.details-control', function (e) {
+
+					function markerMatches(item, query, provincia) {
+							if (provincia && item.provincia !== provincia) {
+									return false;
+							}
+							return !query || item.codice.indexOf(query) !== -1;
+					}
+
+					function zoomToProvince(markers) {
+							if (!markers.length) {
+									return;
+							}
+
+							const bounds = L.latLngBounds(markers.map(function (marker) {
+									return marker.getLatLng();
+							}));
+							if (!bounds.isValid()) {
+									return;
+							}
+
+							map.invalidateSize();
+							map.fitBounds(bounds.pad(0.18), {
+									animate: true,
+									maxZoom: 10
+							});
+					}
+
+					function resetProvinceView() {
+							map.invalidateSize();
+							map.setView(initialMapCenter, initialMapZoom, {animate: true});
+					}
+
+					function applyMapFilters() {
+							const query = ($('#map-search').val() || '').trim().toLowerCase();
+							const activeFilter = $('.map-filter-button.active').data('map-filter') || 'all';
+							const selectedProvince = normalizeProvince(mapProvinceFilter.val());
+							const visibleProvinceMarkers = [];
+
+							layerCommesse.clearLayers();
+							layerOfferte.clearLayers();
+
+							if (activeFilter === 'all' || activeFilter === 'commesse') {
+									commessaMarkers.forEach(item => {
+											if (markerMatches(item, query, selectedProvince)) {
+													item.marker.addTo(layerCommesse);
+													visibleProvinceMarkers.push(item.marker);
+											}
+									});
+							}
+
+							if (activeFilter === 'all' || activeFilter === 'offerte') {
+									offertaMarkers.forEach(item => {
+											if (markerMatches(item, query, selectedProvince)) {
+													item.marker.addTo(layerOfferte);
+													visibleProvinceMarkers.push(item.marker);
+											}
+									});
+							}
+
+							cluster_layer.clearLayers();
+							cluster_layer.addLayers([layerOfferte, layerCommesse]);
+
+							if (selectedProvince) {
+									zoomToProvince(visibleProvinceMarkers);
+							}
+					}
+
+					function focusMapPosition(position, targetItem) {
+							document.getElementById('map').scrollIntoView({behavior: 'smooth', block: 'center'});
+							map.invalidateSize();
+
+							const targetMarker = targetItem ? targetItem.marker : null;
+							const targetLayer = targetItem ? targetItem.layer : null;
+
+							if (!targetMarker) {
+									map.setView(position, mapDetailZoom, {animate: true});
+									return;
+							}
+
+							if (targetLayer && !targetLayer.hasLayer(targetMarker)) {
+									targetMarker.addTo(targetLayer);
+									cluster_layer.clearLayers();
+									cluster_layer.addLayers([layerOfferte, layerCommesse]);
+							}
+
+							if (cluster_layer.zoomToShowLayer) {
+									cluster_layer.zoomToShowLayer(targetMarker, function () {
+											map.setView(position, mapDetailZoom, {animate: true});
+											window.setTimeout(function () {
+													targetMarker.openPopup();
+											}, 180);
+									});
+									return;
+							}
+
+							map.setView(position, mapDetailZoom, {animate: true});
+							targetMarker.openPopup();
+					}
+
+					mapReady = true;
+
+					$('#table-commesse tbody').on('click', 'a.marker', function (e) {
 							e.preventDefault();
-							map.panTo(JSON.parse($(this).context.firstChild.attributes.value.value));
+							const position = JSON.parse(this.dataset.position);
+							const source = this.dataset.recordKind === 'offerta' ? offertaMarkers : commessaMarkers;
+							const target = source.find(item => item.id === this.dataset.recordId);
+							focusMapPosition(position, target || null);
 					});
 			});
 	</script>
 {% endblock %}
-
