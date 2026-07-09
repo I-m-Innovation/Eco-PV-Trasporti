@@ -334,27 +334,78 @@ a:focus-visible {
 
 .upload-inline-form {
     display: grid;
-    grid-template-columns: auto minmax(200px, 1fr) auto;
+    grid-template-columns: minmax(240px, 1fr) auto;
     grid-column: 1 / -1;
     gap: 9px;
     align-items: center;
 }
 
-.upload-inline-form label {
+.upload-drop-zone {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
     margin: 0;
+    padding: 8px 12px;
+    border: 1px solid var(--eco-border-strong);
+    border-radius: 6px;
+    background: linear-gradient(180deg, #ffffff 0%, #f7faf8 100%);
+    color: var(--eco-ink);
+    cursor: pointer;
+    transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.upload-drop-zone:hover,
+.upload-drop-zone:focus-within,
+.upload-drop-zone.is-dragover {
+    border-color: var(--eco-green);
+    background: linear-gradient(180deg, #ffffff 0%, var(--eco-green-soft) 100%);
+    box-shadow: var(--eco-focus);
+}
+
+.upload-drop-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(47, 111, 78, 0.1);
+    color: var(--eco-green);
+}
+
+.upload-drop-copy {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+}
+
+.upload-drop-title {
     color: var(--eco-ink);
     font-size: 0.82rem;
     font-weight: 800;
+    line-height: 1.1;
+}
+
+.upload-file-name {
+    overflow: hidden;
+    color: var(--eco-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.upload-inline-form input[type="file"] {
-    min-height: 34px;
-    padding: 5px 8px;
-    border: 1px solid var(--eco-border-strong);
-    border-radius: 5px;
-    color: var(--eco-ink);
-    font-size: 0.82rem;
+.upload-file-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
 }
 
 .upload-submit {

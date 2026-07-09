@@ -5,10 +5,27 @@ from dal import autocomplete
 from .models import Fornitore, OffertaCommessa, Commessa
 
 
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    def clean(self, data, initial=None):
+        single_file_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            return [single_file_clean(file_data, initial) for file_data in data]
+        return [single_file_clean(data, initial)]
+
+
 class ExcelUploadForm(forms.Form):
-    file = forms.FileField(
+    file = MultipleFileField(
         label='File Excel o CSV',
-        help_text='Carica un file .xlsx, .xls o .csv con i dati delle offerte/commesse.'
+        help_text='Carica uno o piu file .xlsx o .csv con i dati delle offerte/commesse.',
+        widget=MultipleFileInput(attrs={
+            'accept': '.xlsx,.csv',
+            'class': 'upload-file-input',
+            'multiple': True,
+        }),
     )
 
 

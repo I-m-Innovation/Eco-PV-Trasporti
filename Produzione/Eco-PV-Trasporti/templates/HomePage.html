@@ -32,7 +32,7 @@
 						<div>
 							<span class="section-label">Import dati</span>
 							<h4 class="upload-inline-title">Carica Excel</h4>
-							<p class="upload-help">Colonne richieste: codice, produttore, quantita, tipologia. Opzionali: garanzia, note, localita, provincia, latitudine, longitudine, is_commessa, is_done.</p>
+							<p class="upload-help">Accetta riepiloghi offerte e commesse in formato .xlsx o .csv. I campi vengono riconosciuti anche da intestazioni come COD. OFFERTA, COD. COMMESSA, Q.TA', TIPO, LUOGO RITIRO e PROV.</p>
 						</div>
 
 						{% if messages %}
@@ -45,8 +45,14 @@
 
 						<form action="{% url 'carica_excel' %}" method="post" enctype="multipart/form-data" class="upload-inline-form">
 							{% csrf_token %}
-							<label for="{{ upload_form.file.id_for_label }}">File Excel o CSV</label>
-							{{ upload_form.file }}
+							<label class="upload-drop-zone" for="{{ upload_form.file.id_for_label }}" data-upload-dropzone>
+								<span class="upload-drop-icon" aria-hidden="true"><i class="fa fa-upload"></i></span>
+								<span class="upload-drop-copy">
+									<span class="upload-drop-title">File Excel o CSV</span>
+									<span class="upload-file-name" data-upload-file-name>Nessun file selezionato</span>
+								</span>
+								{{ upload_form.file }}
+							</label>
 							<button type="submit" class="upload-submit">Importa</button>
 						</form>
 					</div>
