@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.conf import settings
 from django.contrib import messages
+from django.db import transaction
 from urllib.parse import urlparse
 import math
 import re
@@ -53,6 +54,8 @@ GARANZIA_KEYS = ('garanzia_fin', 'garanzia', 'garanzia_finanziaria')
 IS_COMMESSA_KEYS = ('is_commessa', 'check_commessa')
 IS_DONE_KEYS = ('is_done', 'done', 'evasa', 'commessa_evasa')
 PROCESSO_COMPLETATO_KEYS = ('processo_completato', 'processo_completo')
+DATA_OFFERTA_KEYS = ('data_offerta', 'data')
+DATA_RITIRO_KEYS = ('data_ritiro',)
 HEADER_FIELD_ALIASES = (
     CODICE_GENERICO_KEYS + CODICE_OFFERTA_KEYS + CODICE_COMMESSA_KEYS,
     PRODUTTORE_KEYS,
@@ -92,6 +95,17 @@ def _bool_import(record, *nomi, default=False):
     if isinstance(valore, bool):
         return valore
     return str(valore).strip().lower() in {'1', 'true', 'vero', 'si', 's', 'yes', 'y', 'x'}
+
+
+def _is_da_fare(valore):
+    return _normalizza_colonna(valore) == 'da_fare'
+
+
+def _rispetta_filtro_data_da_fare(record, tipo_record):
+    keys = DATA_RITIRO_KEYS if tipo_record == 'commessa' else DATA_OFFERTA_KEYS
+    if not any(key in record for key in keys):
+        return True
+    return any(_is_da_fare(record.get(key)) for key in keys)
 
 
 def _float_import(record, *nomi):
@@ -281,61 +295,84 @@ def _codice_import(row, tipo_record):
     return _valore(row, *CODICE_GENERICO_KEYS, *CODICE_OFFERTA_KEYS, *CODICE_COMMESSA_KEYS)
 
 
+def _sincronizza_record_importati(codici_per_tipo):
+    rimossi = 0
+    for tipo_record, codici in codici_per_tipo.items():
+        records = OffertaCommessa.objects.filter(is_commessa=(tipo_record == 'commessa'))
+        if codici:
+            records = records.exclude(codice__in=codici)
+        cancellati, _ = records.delete()
+        rimossi += cancellati
+    return rimossi
+
+
 def _importa_offerte_commesse(file_obj):
     records = _records_da_file(file_obj)
 
     creati = 0
     aggiornati = 0
     saltati = 0
+    rimossi = 0
     codici_processati = set()
+    codici_importati_per_tipo = {}
 
-    for row in records:
-        row = {_normalizza_colonna(key): value for key, value in row.items()}
-        tipo_record = _tipo_record_import(row)
-        codice = _codice_import(row, tipo_record)
-        produttore = _valore(row, *PRODUTTORE_KEYS)
-        tipologia = _valore(row, *TIPOLOGIA_KEYS)
-        quantita = _int_import(row, *QUANTITA_KEYS)
-        codice_normalizzato = str(codice or '').strip()
+    with transaction.atomic():
+        for row in records:
+            row = {_normalizza_colonna(key): value for key, value in row.items()}
+            tipo_record = _tipo_record_import(row)
+            codici_importati_per_tipo.setdefault(tipo_record, set())
+            codice = _codice_import(row, tipo_record)
+            produttore = _valore(row, *PRODUTTORE_KEYS)
+            tipologia = _valore(row, *TIPOLOGIA_KEYS)
+            quantita = _int_import(row, *QUANTITA_KEYS)
+            codice_normalizzato = str(codice or '').strip()
 
-        if not codice_normalizzato or not produttore or not tipologia or quantita is None:
-            saltati += 1
-            continue
+            if not _rispetta_filtro_data_da_fare(row, tipo_record):
+                saltati += 1
+                continue
 
-        if codice_normalizzato in codici_processati:
-            continue
-        codici_processati.add(codice_normalizzato)
+            if not codice_normalizzato or not produttore or not tipologia or quantita is None:
+                saltati += 1
+                continue
 
-        localita = _valore(row, *LOCALITA_KEYS)
-        provincia = _valore(row, *PROVINCIA_KEYS)
-        comune = trova_comune(localita, provincia) if localita else None
-        is_commessa = tipo_record == 'commessa'
-        is_done = _bool_import(row, *IS_DONE_KEYS, default=False)
-        if is_commessa and _valore(row, *IS_DONE_KEYS) is None:
-            is_done = _bool_import(row, *PROCESSO_COMPLETATO_KEYS, default=False)
+            codice_processato = (tipo_record, codice_normalizzato)
+            if codice_processato in codici_processati:
+                continue
+            codici_processati.add(codice_processato)
 
-        dati = {
-            'produttore': str(produttore).strip(),
-            'garanzia_fin': _normalizza_garanzia(row),
-            'quantita': quantita,
-            'tipologia': str(tipologia).strip(),
-            'note': str(_valore(row, 'note') or '').strip(),
-            'latitudine': _float_import(row, 'latitudine', 'lat'),
-            'longitudine': _float_import(row, 'longitudine', 'lon', 'lng'),
-            'is_commessa': is_commessa,
-            'is_done': is_done,
-        }
-        if comune:
-            dati['paese'] = comune
+            localita = _valore(row, *LOCALITA_KEYS)
+            provincia = _valore(row, *PROVINCIA_KEYS)
+            comune = trova_comune(localita, provincia) if localita else None
+            is_commessa = tipo_record == 'commessa'
+            is_done = _bool_import(row, *IS_DONE_KEYS, default=False)
+            if is_commessa and _valore(row, *IS_DONE_KEYS) is None:
+                is_done = _bool_import(row, *PROCESSO_COMPLETATO_KEYS, default=False)
 
-        _, creato = OffertaCommessa.objects.update_or_create(
-            codice=codice_normalizzato,
-            defaults=dati,
-        )
-        creati += int(creato)
-        aggiornati += int(not creato)
+            dati = {
+                'produttore': str(produttore).strip(),
+                'garanzia_fin': _normalizza_garanzia(row),
+                'quantita': quantita,
+                'tipologia': str(tipologia).strip(),
+                'note': str(_valore(row, 'note') or '').strip(),
+                'latitudine': _float_import(row, 'latitudine', 'lat'),
+                'longitudine': _float_import(row, 'longitudine', 'lon', 'lng'),
+                'is_commessa': is_commessa,
+                'is_done': is_done,
+            }
+            if comune:
+                dati['paese'] = comune
 
-    return creati, aggiornati, saltati
+            _, creato = OffertaCommessa.objects.update_or_create(
+                codice=codice_normalizzato,
+                defaults=dati,
+            )
+            codici_importati_per_tipo[tipo_record].add(codice_normalizzato)
+            creati += int(creato)
+            aggiornati += int(not creato)
+
+        rimossi = _sincronizza_record_importati(codici_importati_per_tipo)
+
+    return creati, aggiornati, saltati, rimossi
 
 
 class AppLoginView(LoginView):
@@ -496,25 +533,27 @@ def carica_excel(request):
             creati_totali = 0
             aggiornati_totali = 0
             saltati_totali = 0
+            rimossi_totali = 0
             errori = []
 
             for file_obj in files:
                 try:
-                    creati, aggiornati, saltati = _importa_offerte_commesse(file_obj)
+                    creati, aggiornati, saltati, rimossi = _importa_offerte_commesse(file_obj)
                     creati_totali += creati
                     aggiornati_totali += aggiornati
                     saltati_totali += saltati
+                    rimossi_totali += rimossi
                 except Exception as exc:
                     errori.append(f'{file_obj.name}: {exc}')
 
-            if creati_totali or aggiornati_totali or saltati_totali:
+            if creati_totali or aggiornati_totali or saltati_totali or rimossi_totali:
                 messages.success(
                     request,
-                    f'Import completato: {creati_totali} creati, {aggiornati_totali} aggiornati, {saltati_totali} righe saltate.'
+                    f'Import completato: {creati_totali} creati, {aggiornati_totali} aggiornati, {saltati_totali} righe saltate, {rimossi_totali} record rimossi.'
                 )
             for errore in errori:
                 messages.error(request, f'Import non riuscito: {errore}')
-            if not (creati_totali or aggiornati_totali or saltati_totali) and not errori:
+            if not (creati_totali or aggiornati_totali or saltati_totali or rimossi_totali) and not errori:
                 messages.error(request, 'Nessuna riga valida trovata nel file caricato.')
             return redirect(f'{resolve_url("home")}?upload=1')
 

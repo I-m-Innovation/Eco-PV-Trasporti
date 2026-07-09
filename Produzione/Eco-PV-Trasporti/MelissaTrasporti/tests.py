@@ -60,43 +60,79 @@ class ExcelImportTests(TestCase):
         )
 
     def test_importa_offerte_da_header_non_in_prima_riga(self):
+        OffertaCommessa.objects.create(
+            codice="OSB_OLD",
+            produttore="OFFERTA VECCHIA",
+            quantita=1,
+            tipologia="Poli",
+            is_commessa=False,
+        )
+        OffertaCommessa.objects.create(
+            codice="CR_KEEP",
+            produttore="COMMESSA DA NON TOCCARE",
+            quantita=1,
+            tipologia="Poli",
+            is_commessa=True,
+        )
         file_obj = self._uploaded_workbook(
             "01_Riepilogo_OFFERTE_Eco-Pv_2026.xlsx",
             [
                 ["OFFERTE ECO-PV 2026"],
                 ["N.", "PRODUTTORE", "NOME RIF.", "MAIL RIF.", None, "COD. OFFERTA", "DATA OFFERTA", "COD. OCB", "COD. COMMESSA", "DATA CONTRATTO", "CONTRATTO ACCETTATO", "CATEGORIA", "GARANZIA FINANZIARIA", "Q.TA'", "TIPO", "PESO STIMATO (KG)", "VIAGGI STIMATI", "LUOGO RITIRO", "PROV"],
-                [1, "CALZIFICIO ILARY SRL", "Paola", "mail@example.com", "M-E-M", "OSB_26001", None, "CO_26001", "CR_26038", None, None, "MOD", "ANTE", 33, "Poli", 660, 1, "Brescia", "BS"],
+                [1, "CALZIFICIO ILARY SRL", "Paola", "mail@example.com", "M-E-M", "OSB_26001", "da fare", "CO_26001", "CR_26038", None, None, "MOD", "ANTE", 33, "Poli", 660, 1, "Brescia", "BS"],
+                [2, "LA ROBINIA SRL", "Vadim", "mail2@example.com", "M-E-M", "OSB_26002", "06/02/2026", "CO_26002", "CR_26039", None, None, "MOD", "ANTE", 178, "Poli", 3560, 3, "Brescia", "BS"],
             ],
         )
 
-        creati, aggiornati, saltati = _importa_offerte_commesse(file_obj)
+        creati, aggiornati, saltati, rimossi = _importa_offerte_commesse(file_obj)
 
-        self.assertEqual((creati, aggiornati, saltati), (1, 0, 0))
+        self.assertEqual((creati, aggiornati, saltati, rimossi), (1, 0, 1, 1))
         record = OffertaCommessa.objects.get(codice="OSB_26001")
         self.assertFalse(record.is_commessa)
         self.assertEqual(record.produttore, "CALZIFICIO ILARY SRL")
         self.assertEqual(record.quantita, 33)
         self.assertEqual(record.garanzia_fin, "ANTE")
         self.assertEqual(record.paese.name, "Brescia")
+        self.assertFalse(OffertaCommessa.objects.filter(codice="OSB_26002").exists())
+        self.assertFalse(OffertaCommessa.objects.filter(codice="OSB_OLD").exists())
+        self.assertTrue(OffertaCommessa.objects.filter(codice="CR_KEEP").exists())
 
     def test_importa_commesse_da_header_operativo(self):
+        OffertaCommessa.objects.create(
+            codice="CR_OLD",
+            produttore="COMMESSA VECCHIA",
+            quantita=1,
+            tipologia="Poli",
+            is_commessa=True,
+        )
+        OffertaCommessa.objects.create(
+            codice="OSB_KEEP",
+            produttore="OFFERTA DA NON TOCCARE",
+            quantita=1,
+            tipologia="Poli",
+            is_commessa=False,
+        )
         file_obj = self._uploaded_workbook(
             "02_Riepilogo_COMMESSE_Eco-PV_2026.xlsx",
             [
                 ["ECO-PV | GESTIONE GENERALE COMMESSE RTT 2026 - CONTROLLO OPERATIVO", "COD. COMMESSA", "PRODUTTORE", None, None, None, None, None, None, "GARANZIA FINANZIARIA", "Q.TA", "TIPO", None, None, "LUOGO RITIRO", "PROVINCIA"],
                 [None, "x", "x", None, None, None, None, None, None, "x", "x", "x", None, None, "x", "x"],
                 ["N.", "COD. COMMESSA", "PRODUTTORE", "NOME RIF.", "MAIL RIF.", "RIF. ECO-PV", "COD. OSB", "RIF. CC-CO", "CATEGORIA", "GARANZIA FINANZIARIA", "Q.TA'", "TIPO", "PESO STIMATO (KG)", "VIAGGI STIMATI", "LUOGO RITIRO", "PROV", "TRASPORTATORE", "CENTRO TRATTAMENTO", "DATA RITIRO", "II COPIA FIR", "REDAZIONE DOC GSE", "DICH AVV CONS", "INVIO DOC GSE CENTRO TRATT", "CERT AVV TRATT", "INVIO CLIENTE", "NR FATTURA", "DATA FATTURA", "IMPONIBILE", "PAGAMENTO", "PROCESSO COMPLETATO"],
-                [1, "CR_26001", "SOCIETA AGRICOLA", "Andrea", "mail@example.com", "M-E-M", "OSB_25411", "CC_26001", "MOD", "-", 89, "Film Sottile", 1481.3, 1, "Piombino", "LI", "ECS-ERP", "ECS-ERP", None, "SI", "SI", "SI", "-", "-", "-", 78, None, 1500, None, "SI"],
+                [1, "CR_26001", "SOCIETA AGRICOLA", "Andrea", "mail@example.com", "M-E-M", "OSB_25411", "CC_26001", "MOD", "-", 89, "Film Sottile", 1481.3, 1, "Piombino", "LI", "ECS-ERP", "ECS-ERP", "da fare", "SI", "SI", "SI", "-", "-", "-", 78, None, 1500, None, "SI"],
+                [2, "CR_26002", "SOCIETA EVASA", "Andrea", "mail2@example.com", "M-E-M", "OSB_25412", "CC_26002", "MOD", "-", 20, "Poli", 400, 1, "Brescia", "BS", "ECS-ERP", "ECS-ERP", "10/04/2026", "SI", "SI", "SI", "-", "-", "-", 79, None, 700, None, "SI"],
             ],
             sheet_title="2026_GESTIONE",
         )
 
-        creati, aggiornati, saltati = _importa_offerte_commesse(file_obj)
+        creati, aggiornati, saltati, rimossi = _importa_offerte_commesse(file_obj)
 
-        self.assertEqual((creati, aggiornati, saltati), (1, 0, 0))
+        self.assertEqual((creati, aggiornati, saltati, rimossi), (1, 0, 1, 1))
         record = OffertaCommessa.objects.get(codice="CR_26001")
         self.assertTrue(record.is_commessa)
         self.assertTrue(record.is_done)
         self.assertEqual(record.quantita, 89)
         self.assertEqual(record.tipologia, "Film Sottile")
         self.assertEqual(record.paese.name, "Piombino")
+        self.assertFalse(OffertaCommessa.objects.filter(codice="CR_26002").exists())
+        self.assertFalse(OffertaCommessa.objects.filter(codice="CR_OLD").exists())
+        self.assertTrue(OffertaCommessa.objects.filter(codice="OSB_KEEP").exists())
