@@ -470,8 +470,10 @@
 							return `<div class="map-popup-detail"><h5>${escapeHtml(title)}</h5>${detailRows}</div>`;
 					}
 
-					const baseLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-							maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+					const baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+							subdomains: 'abcd',
+							maxZoom: 20,
+							attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
 					});
 
 					const layerTrasporto = L.layerGroup();
