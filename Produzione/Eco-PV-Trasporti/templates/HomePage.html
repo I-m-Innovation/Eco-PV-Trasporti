@@ -2,6 +2,10 @@
 {% load static %}
 
 {% block scripts %}
+	<!-- Open-source vector basemap, hosted by OpenFreeMap (no API key). -->
+	<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css">
+	<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+	<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js"></script>
 	<link rel="stylesheet" href="{% static 'MelissaTrasporti/leaflet-icons/leaflet.awesome-markers.css' %}">
 	<script src="{% static 'MelissaTrasporti/leaflet-icons/leaflet.awesome-markers.js' %}"></script>
 
@@ -476,10 +480,8 @@
 							return `<div class="map-popup-detail"><h5>${escapeHtml(title)}</h5>${detailRows}</div>`;
 					}
 
-					const baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-							subdomains: 'abcd',
-							maxZoom: 20,
-							attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+					const baseLayer = L.maplibreGL({
+							style: 'https://tiles.openfreemap.org/styles/liberty'
 					});
 
 					const layerTrasporto = L.layerGroup();
@@ -533,7 +535,8 @@
 							layers: [baseLayer, layerTrasporto]
 					});
 
-					const layerControl = L.control.layers({'OpenStreetMap': baseLayer}, {'Trasporto': layerTrasporto, 'Commesse': layerCommesse, 'Offerte': layerOfferte}).addTo(map);
+					map.attributionControl.addAttribution(`<a href="https://openfreemap.org/">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>`);
+					const layerControl = L.control.layers({'OpenFreeMap': baseLayer}, {'Trasporto': layerTrasporto, 'Commesse': layerCommesse, 'Offerte': layerOfferte}).addTo(map);
 					layerControl.addOverlay(layerTrattamento, 'Trattamento');
 					layerControl.addOverlay(layerCompleti, 'Trasporto & Trattamento');
 
