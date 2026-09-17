@@ -483,6 +483,7 @@
 					const layerCompleti =  L.layerGroup();
 					const layerOfferte = L.layerGroup();
 					const layerCommesse = L.layerGroup();
+					const fornitoreMarkers = [];
 					const commessaMarkers = [];
 					const offertaMarkers = [];
 
@@ -501,23 +502,27 @@
 									['Latitudine', fornitore.latitudine],
 									['Longitudine', fornitore.longitudine],
 							]);
+							let marker;
 							if (fornitore.trasporto && fornitore.trattamento) {
-									L.marker([fornitore.latitudine, fornitore.longitudine],
+									marker = L.marker([fornitore.latitudine, fornitore.longitudine],
 											{icon: L.AwesomeMarkers.icon({icon: 'refresh', markerColor: 'orange', prefix: 'fa'})
 											}
 									).bindPopup(html).addTo(layerCompleti);
+								fornitoreMarkers.push({marker: marker, layer: layerCompleti, provincia: normalizeProvince(fornitore.paese__provincia)});
 							}
 							else if (fornitore.trasporto){
-									L.marker([fornitore.latitudine, fornitore.longitudine],
+									marker = L.marker([fornitore.latitudine, fornitore.longitudine],
 											{icon: L.AwesomeMarkers.icon({icon: 'truck', markerColor: 'darkblue', prefix: 'fa'})
 											}
 									).bindPopup(html).addTo(layerTrasporto);
+								fornitoreMarkers.push({marker: marker, layer: layerTrasporto, provincia: normalizeProvince(fornitore.paese__provincia)});
 							}
 							else if (fornitore.trattamento){
-									L.marker([fornitore.latitudine, fornitore.longitudine],
+									marker = L.marker([fornitore.latitudine, fornitore.longitudine],
 											{icon: L.AwesomeMarkers.icon({icon: 'recycle', markerColor: 'darkgreen', prefix: 'fa'})
 											}
 									).bindPopup(html).addTo(layerTrattamento);
+								fornitoreMarkers.push({marker: marker, layer: layerTrattamento, provincia: normalizeProvince(fornitore.paese__provincia)});
 							}
 					});
 
@@ -526,6 +531,7 @@
 					var map = L.map('map',{
 							center: initialMapCenter,
 							zoom: initialMapZoom,
+							maxZoom: 18,
 							layers: [baseLayer, layerTrasporto]
 					});
 
@@ -627,8 +633,18 @@
 							const selectedProvince = normalizeProvince(mapProvinceFilter.val());
 							const visibleProvinceMarkers = [];
 
+							layerTrasporto.clearLayers();
+							layerTrattamento.clearLayers();
+							layerCompleti.clearLayers();
 							layerCommesse.clearLayers();
 							layerOfferte.clearLayers();
+
+							fornitoreMarkers.forEach(item => {
+								if (!selectedProvince || item.provincia === selectedProvince) {
+									item.marker.addTo(item.layer);
+									visibleProvinceMarkers.push(item.marker);
+								}
+							});
 
 							if (activeFilter === 'all' || activeFilter === 'commesse') {
 									commessaMarkers.forEach(item => {
